@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.model;
+package com.newhan.newhanchat.model.user;
 
 import java.time.LocalDateTime;
 
