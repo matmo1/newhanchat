@@ -16,9 +16,6 @@ public class UserStatus {
 
     public void setStatus(StatusType s) {
         this.type = s;
-    }
-
-    public void setLastActive() {
         if (type == StatusType.OFFLINE || type == StatusType.AWAY) 
         lasActive = LocalDateTime.now();
         else lasActive = null;

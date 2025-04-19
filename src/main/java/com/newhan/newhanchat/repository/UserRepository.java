@@ -7,4 +7,6 @@ import com.newhan.newhanchat.model.user.User;
 
 public interface UserRepository extends MongoRepository<User, ObjectId> {
 
+    boolean existsByUserName(String userName);
+
 }
