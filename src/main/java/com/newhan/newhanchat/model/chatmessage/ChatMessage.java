@@ -17,7 +17,7 @@ public class ChatMessage {
     private ObjectId senderId;
     private ObjectId reciepentId;
 
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private LocalDateTime timestamp;
 
     private MessageSatus status = MessageSatus.PENDING;
 
@@ -35,5 +35,6 @@ public class ChatMessage {
     public void setSenderId(ObjectId id) {senderId = id;}
     public void setReciepentId(ObjectId id) {reciepentId = id;}
     public void setStatus(MessageSatus s) {status = s;}
-    
+    public void setMessageContent(String content) {this.content = content;}
+    public void setTimestamp(LocalDateTime time) {timestamp = time;}
 }
