@@ -17,7 +17,7 @@ public class ChatMessage {
     private ObjectId senderId;
     private ObjectId reciepentId;
 
-    private LocalDateTime timestamp;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
     private MessageSatus status = MessageSatus.PENDING;
 
