@@ -15,7 +15,7 @@ public class ChatMessage {
     private String content;
     
     private ObjectId senderId;
-    private ObjectId reciepentId;
+    private ObjectId recipientId;
 
     private LocalDateTime timestamp;
 
@@ -28,12 +28,12 @@ public class ChatMessage {
     public ObjectId getId() {return mesId;}
     public String getContent() {return content;}
     public ObjectId getSenderId() {return senderId;}
-    public ObjectId getReciepentId() {return reciepentId;}
+    public ObjectId getReciepentId() {return recipientId;}
     public LocalDateTime getTimestamp() {return timestamp;}
     public MessageSatus getStatus() {return status;}
 
     public void setSenderId(ObjectId id) {senderId = id;}
-    public void setReciepentId(ObjectId id) {reciepentId = id;}
+    public void setReciepentId(ObjectId id) {recipientId = id;}
     public void setStatus(MessageSatus s) {status = s;}
     public void setMessageContent(String content) {this.content = content;}
     public void setTimestamp(LocalDateTime time) {timestamp = time;}
