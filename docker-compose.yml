@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  newhanchat:
+    build: .
+    container_name: newhanchat-app
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/newhanchat
+      - SPRING_DATA_MONGODB_DATABASE=newhanchat
+      - SPRING_PROFILES_ACTIVE=prod
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:6.0
+    container_name: newhanchat-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    environment:
+      - MONGO_INITDB_DATABASE=newhanchat
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=admin123
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
