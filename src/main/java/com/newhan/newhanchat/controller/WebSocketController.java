@@ -11,8 +11,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
-import com.newhan.newhanchat.dto.ChatMessageDTO;
-import com.newhan.newhanchat.dto.SendMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.ChatMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.SendMessageDTO;
 import com.newhan.newhanchat.service.ChatMessageService;
 
 @Controller

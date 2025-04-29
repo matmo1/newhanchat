@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.dto;
+package com.newhan.newhanchat.dto.userdtos;
 
 import org.bson.types.ObjectId;
 

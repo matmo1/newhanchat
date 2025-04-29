@@ -7,8 +7,9 @@ import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.newhan.newhanchat.dto.ChatMessageDTO;
-import com.newhan.newhanchat.dto.SendMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.ChatMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.EditedMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.SendMessageDTO;
 import com.newhan.newhanchat.model.chatmessage.ChatMessage;
 import com.newhan.newhanchat.model.chatmessage.MessageSatus;
 import com.newhan.newhanchat.repository.ChatMessageRepository;
@@ -47,6 +48,22 @@ public class ChatMessageService {
             .stream()
             .map(this::toDtoMessage)
             .toList();
+    }
+
+    public ChatMessageDTO editMessage(EditedMessageDTO dto, ObjectId requesterId) {
+        ChatMessage message = chatMessageRepository.findById(dto.mesId())
+            .orElseThrow(() -> new IllegalArgumentException("Message not found"));
+        
+        if (!message.getSenderId().equals(requesterId)) {
+            throw new SecurityException("Only the sender can edit the message");
+        }
+
+        message.setMessageContent(dto.newContent());
+        message.setEdited(true);
+        message.setLastEdited();
+
+        ChatMessage updated = chatMessageRepository.save(message);
+        return toDtoMessage(updated);
     }
 
     private ChatMessageDTO toDtoMessage(ChatMessage chatMessage) {

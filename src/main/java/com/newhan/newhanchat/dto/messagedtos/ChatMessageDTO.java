@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.dto;
+package com.newhan.newhanchat.dto.messagedtos;
 
 import java.time.LocalDateTime;
 

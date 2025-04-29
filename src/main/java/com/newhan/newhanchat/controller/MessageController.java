@@ -3,7 +3,7 @@ package com.newhan.newhanchat.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.newhan.newhanchat.dto.ChatMessageDTO;
+import com.newhan.newhanchat.dto.messagedtos.ChatMessageDTO;
 import com.newhan.newhanchat.service.ChatMessageService;
 
 import java.util.List;

@@ -3,8 +3,8 @@ package com.newhan.newhanchat.controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.newhan.newhanchat.dto.UserRegistrationDTO;
-import com.newhan.newhanchat.dto.UserResponseDTO;
+import com.newhan.newhanchat.dto.userdtos.UserRegistrationDTO;
+import com.newhan.newhanchat.dto.userdtos.UserResponseDTO;
 import com.newhan.newhanchat.model.user.StatusType;
 import com.newhan.newhanchat.service.UserService;
 import org.springframework.web.bind.annotation.PostMapping;
