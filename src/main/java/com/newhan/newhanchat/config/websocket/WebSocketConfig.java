@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.config;
+package com.newhan.newhanchat.config.websocket;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.MessageBrokerRegistry;
