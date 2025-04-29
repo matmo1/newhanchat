@@ -12,5 +12,7 @@ public record ChatMessageDTO(
     ObjectId senderId,
     ObjectId recipientId,
     LocalDateTime timestamp,
-    MessageSatus status
+    MessageSatus status,
+    boolean edited,
+    LocalDateTime lastEdited
 ) {}

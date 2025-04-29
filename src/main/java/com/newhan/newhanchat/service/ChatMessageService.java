@@ -73,7 +73,9 @@ public class ChatMessageService {
             chatMessage.getSenderId(), 
             chatMessage.getReciepentId(), 
             chatMessage.getTimestamp(), 
-            chatMessage.getStatus()
+            chatMessage.getStatus(), 
+            chatMessage.getEdited(),
+            chatMessage.getLastEdited()
             );
     }
 }
