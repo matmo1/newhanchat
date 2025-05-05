@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/users")
 public class UserController {
     private final UserService userService;
 
@@ -31,12 +31,12 @@ public class UserController {
         return userService.registerUser(dto);
     }
 
-    @GetMapping("{userId}")
-    public UserResponseDTO getUser(@RequestParam ObjectId id) {
+    @GetMapping("/{id}")
+    public UserResponseDTO getUser(@PathVariable ObjectId id) {
         return userService.getUserById(id);
     }
     
-    @PatchMapping("/{userId}/status")
+    @PatchMapping("/{id}/status")
     public UserResponseDTO updateStatus(
         @PathVariable ObjectId id,
         @RequestParam StatusType status

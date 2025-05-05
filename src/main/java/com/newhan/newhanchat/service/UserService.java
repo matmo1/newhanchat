@@ -38,15 +38,15 @@ public class UserService {
         return toDto(savedUser);
     }
 
-    public UserResponseDTO getUserById(ObjectId userId) {
-        return userRepository.findById(userId)
+    public UserResponseDTO getUserById(ObjectId id) {
+        return userRepository.findById(id)
         .map(this::toDto)
         .orElseThrow(() -> new IllegalArgumentException("User not found"));
     }
 
     @Transactional
-    public UserResponseDTO updateStatus(ObjectId userId, StatusType status) {
-        User user = userRepository.findById(userId)
+    public UserResponseDTO updateStatus(ObjectId id, StatusType status) {
+        User user = userRepository.findById(id)
         .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.getUserStatus().setStatus(status);
         return toDto(userRepository.save(user));
