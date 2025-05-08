@@ -32,16 +32,16 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public UserResponseDTO getUser(@PathVariable ObjectId id) {
-        return userService.getUserById(id);
+    public UserResponseDTO getUser(@PathVariable String id) {
+        return userService.getUserById(new ObjectId(id));
     }
     
     @PatchMapping("/{id}/status")
     public UserResponseDTO updateStatus(
-        @PathVariable ObjectId id,
+        @PathVariable String id,
         @RequestParam StatusType status
         ) {
-            return userService.updateStatus(id, status);
+            return userService.updateStatus(new ObjectId(id), status);
         }
     
 }
