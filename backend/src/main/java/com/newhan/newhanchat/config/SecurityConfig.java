@@ -31,7 +31,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JwtAuthFilter jwtAuthFilter() {
+    JwtAuthFilter jwtAuthFilter() {
         return new JwtAuthFilter();
     }
 }
