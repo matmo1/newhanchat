@@ -1,47 +1,49 @@
 package com.newhan.newhanchat.controller;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.newhan.newhanchat.dto.userdtos.UserRegistrationDTO;
-import com.newhan.newhanchat.dto.userdtos.UserResponseDTO;
+import org.bson.types.ObjectId;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import com.newhan.newhanchat.dto.userdtos.*;
 import com.newhan.newhanchat.model.user.StatusType;
 import com.newhan.newhanchat.service.UserService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.bson.types.ObjectId;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
-
-
+import jakarta.validation.Valid;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/api/users")
 public class UserController {
+    
     private final UserService userService;
-
+    
     public UserController(UserService userService) {
         this.userService = userService;
     }
 
+    // User Registration
     @PostMapping("/register")
-    public UserResponseDTO register(@RequestBody UserRegistrationDTO dto) {
-        return userService.registerUser(dto);
+    public ResponseEntity<UserResponseDTO> registerUser(
+            @Valid @RequestBody UserRegistrationDTO registrationDTO) {
+        UserResponseDTO response = userService.registerUser(registrationDTO);
+        return ResponseEntity.ok(response);
     }
 
+    // Get Single User
     @GetMapping("/{id}")
-    public UserResponseDTO getUser(@PathVariable String id) {
-        return userService.getUserById(new ObjectId(id));
-    }
-    
-    @PatchMapping("/{id}/status")
-    public UserResponseDTO updateStatus(
-        @PathVariable String id,
-        @RequestParam StatusType status
-        ) {
-            return userService.updateStatus(new ObjectId(id), status);
+    public ResponseEntity<UserResponseDTO> getUserById(
+            @PathVariable String id) {
+        if (!ObjectId.isValid(id)) {
+            return ResponseEntity.badRequest().build();
         }
-    
+        return ResponseEntity.ok(userService.getUserById(new ObjectId(id)));
+    }
+
+    // Update User Status
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<UserResponseDTO> updateUserStatus(
+            @PathVariable String id,
+            @RequestParam StatusType status) {
+        if (!ObjectId.isValid(id)) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(userService.updateStatus(new ObjectId(id), status));
+    }
 }

@@ -1,14 +1,18 @@
 # Build stage with OpenJDK 21
 FROM eclipse-temurin:21-jdk-jammy as builder
 WORKDIR /app
-COPY .mvn/ .mvn
-COPY mvnw pom.xml ./
 
-# Add this line to set execute permissions
+# First copy just the mvnw file to verify it's there
+COPY mvnw .
+RUN sed -i 's/\r$//' mvnw  # Remove Windows CRLF line endings if present
 RUN chmod +x mvnw
 
-RUN ./mvnw dependency:go-offline
+# Then copy the rest
+COPY .mvn/ .mvn
+COPY pom.xml .
 COPY src ./src
+
+RUN ./mvnw dependency:go-offline
 RUN ./mvnw clean package -DskipTests
 
 # Runtime stage with OpenJDK 21 JRE

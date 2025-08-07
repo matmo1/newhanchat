@@ -1,6 +1,7 @@
 package com.newhan.newhanchat.config;
 
 import java.io.IOException;
+import java.util.Collections;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -17,16 +18,38 @@ import jakarta.servlet.http.HttpServletResponse;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final String SECRET_KEY = "nyakyv-taen-klyuch";
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-        String token = extractToken(request);
-        if (token != null && validateToken(token)) {
-            Authentication auth = createAuthebtication(token);
-            SecurityContextHolder.getContext().setAuthentication(auth);
+                                   HttpServletResponse response,
+                                   FilterChain filterChain) throws ServletException, IOException {
+        
+        String path = request.getRequestURI();
+        
+        // Skip JWT check for public endpoints
+        if (path.startsWith("/api/users/register") || 
+            path.startsWith("/api/users/login")) {
+            filterChain.doFilter(request, response);
+            return;
         }
-        filterChain.doFilter(request, response);
+
+        try {
+            String token = extractToken(request);
+            if (token == null) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing JWT token");
+                return;
+            }
+            
+            if (validateToken(token)) {
+                Authentication auth = createAuthentication(token);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+                filterChain.doFilter(request, response);
+            } else {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid JWT");
+            }
+        } catch (Exception e) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
+        }
     }
 
     private String extractToken(HttpServletRequest request) {
@@ -42,14 +65,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             Jwts.parserBuilder()
                 .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
                 .build()
-                .parseClaimsJwt(token);
+                .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
             return false;
         }
     }
 
-    private Authentication createAuthebtication(String token) {
+    private Authentication createAuthentication(String token) {
         String username = Jwts.parserBuilder()
             .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
             .build()
@@ -57,6 +80,6 @@ public class JwtAuthFilter extends OncePerRequestFilter {
             .getBody()
             .getSubject();
 
-        return new UsernamePasswordAuthenticationToken(username, null);
+        return new UsernamePasswordAuthenticationToken(username, null, Collections.emptyList());
     }
 }
