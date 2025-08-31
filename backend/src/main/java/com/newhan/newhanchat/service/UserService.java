@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.newhan.newhanchat.dto.userdtos.UserLoginDTO;
 import com.newhan.newhanchat.dto.userdtos.UserRegistrationDTO;
 import com.newhan.newhanchat.dto.userdtos.UserResponseDTO;
 import com.newhan.newhanchat.model.user.StatusType;
@@ -15,10 +16,12 @@ import com.newhan.newhanchat.repository.UserRepository;
 public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.jwtService = jwtService;
     }
 
     @Transactional
@@ -36,6 +39,18 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
         return toDto(savedUser);
+    }
+
+    @Transactional
+    public String loginUser(UserLoginDTO dto) {
+        User user = userRepository.findByUserName(dto.username())
+            .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
+
+        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
+            throw new IllegalArgumentException("Invalid username or password");
+        }
+
+        return jwtService.generateToken(user);
     }
 
     public UserResponseDTO getUserById(ObjectId id) {

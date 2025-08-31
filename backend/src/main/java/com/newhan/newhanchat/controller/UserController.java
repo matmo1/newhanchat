@@ -3,6 +3,8 @@ package com.newhan.newhanchat.controller;
 import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import com.newhan.newhanchat.dto.JwtResponseDTO;
 import com.newhan.newhanchat.dto.userdtos.*;
 import com.newhan.newhanchat.model.user.StatusType;
 import com.newhan.newhanchat.service.UserService;
@@ -24,6 +26,12 @@ public class UserController {
             @Valid @RequestBody UserRegistrationDTO registrationDTO) {
         UserResponseDTO response = userService.registerUser(registrationDTO);
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<JwtResponseDTO> loginUser(@Valid @RequestBody UserLoginDTO loginDTO) {
+        String token = userService.loginUser(loginDTO);
+        return ResponseEntity.ok(new JwtResponseDTO(token));
     }
 
     // Get Single User

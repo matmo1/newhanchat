@@ -3,6 +3,7 @@ package com.newhan.newhanchat.config;
 import java.io.IOException;
 import java.util.Collections;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -17,7 +18,8 @@ import jakarta.servlet.http.HttpServletResponse;
 
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    private final String SECRET_KEY = "nyakyv-taen-klyuch";
+    @Value("${jwt.secret}")
+    private String secretKey;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -63,7 +65,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     private boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+                .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
                 .build()
                 .parseClaimsJws(token);
             return true;
@@ -74,7 +76,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
     private Authentication createAuthentication(String token) {
         String username = Jwts.parserBuilder()
-            .setSigningKey(Keys.hmacShaKeyFor(SECRET_KEY.getBytes()))
+            .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
             .build()
             .parseClaimsJws(token)
             .getBody()

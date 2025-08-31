@@ -4,11 +4,10 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 import org.bson.types.ObjectId;
-import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
 import com.newhan.newhanchat.dto.messagedtos.ChatMessageDTO;
@@ -27,7 +26,11 @@ public class WebSocketController {
     }
 
     @MessageMapping("/chat")
-    public void processMessage(@Payload SendMessageDTO messageDTO, @Header("simpSeesioId") ObjectId sessionId, @AuthenticationPrincipal ObjectId  senderId) {
+    public void processMessage(@Payload SendMessageDTO messageDTO,
+                               Authentication authentication) {
+
+        String userIdString = authentication.getName();
+        ObjectId senderId = new ObjectId(userIdString);
         ChatMessageDTO savedMessage = chatMessageService.saveMessage(messageDTO, senderId);
 
         messagingTemplate.convertAndSendToUser(messageDTO.recipientId().toString(), "/queue/messages", savedMessage);
@@ -38,8 +41,10 @@ public class WebSocketController {
     @MessageMapping("/edit")
     public void handleEdit(
         @Payload EditedMessageDTO dto,
-        @AuthenticationPrincipal ObjectId requesterId
+        Authentication authentication
     ) {
+        String userIdString = authentication.getName();
+        ObjectId requesterId = new ObjectId(userIdString);
         ChatMessageDTO editedMessage = chatMessageService.editMessage(dto, requesterId);
 
         messagingTemplate.convertAndSendToUser(editedMessage.recipientId().toString(), "/queue/message-updates", 
