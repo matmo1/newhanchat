@@ -19,7 +19,7 @@ public class User {
     @Id
     private ObjectId userId;
 
-    private UserStatus status;
+    private UserStatus status = new UserStatus();
 
     @Indexed(unique = true)
     @Size(min = 3, max = 20)

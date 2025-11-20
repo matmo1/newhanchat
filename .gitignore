@@ -55,6 +55,7 @@ HELP.md
 /nbbuild/
 /nbdist/
 /.nb-gradle/
+/mongo-init.js
 
 # Maven
 !.mvn/wrapper/maven-wrapper.jar
