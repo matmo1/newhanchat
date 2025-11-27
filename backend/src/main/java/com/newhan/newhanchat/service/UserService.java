@@ -34,6 +34,7 @@ public class UserService {
         user.setUserName(dto.userName());
         user.setFirstName(dto.fname());
         user.setLastName(dto.lname());
+        user.setDateOfBirth(dto.dOfBirth());
         user.setPassword(passwordEncoder.encode(dto.password()));
         user.getUserStatus().setStatus(StatusType.OFFLINE);
 

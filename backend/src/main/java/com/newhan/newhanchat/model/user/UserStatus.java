@@ -6,11 +6,11 @@ public class UserStatus {
     private StatusType type = StatusType.OFFLINE;
     private LocalDateTime lasActive;
 
-    protected StatusType getType() {
+    public StatusType getType() {
         return type;
     }
 
-    protected LocalDateTime getLastActive() {
+    public LocalDateTime getLastActive() {
         return lasActive;
     }
 

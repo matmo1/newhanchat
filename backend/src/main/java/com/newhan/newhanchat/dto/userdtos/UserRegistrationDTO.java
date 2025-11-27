@@ -12,7 +12,7 @@ public record UserRegistrationDTO(
     String fname,
     @NotBlank
     String lname,
-    @NotBlank
+    @NotNull
     LocalDateTime dOfBirth,
     @NotBlank
     @Size(min = 8)

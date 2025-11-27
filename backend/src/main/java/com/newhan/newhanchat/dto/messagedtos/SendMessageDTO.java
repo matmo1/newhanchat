@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record SendMessageDTO(
     @NotBlank
-    String contenet,
+    String content,
     @NotBlank
     ObjectId recipientId
 ) {}

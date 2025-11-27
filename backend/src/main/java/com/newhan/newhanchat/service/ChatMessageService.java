@@ -33,7 +33,7 @@ public class ChatMessageService {
             .orElseThrow(() -> new IllegalArgumentException("Recipient not found"));
 
         ChatMessage message = new ChatMessage(null);
-        message.setMessageContent(sendMessageDTO.contenet());
+        message.setMessageContent(sendMessageDTO.content());
         message.setSenderId(senderId);
         message.setReciepentId(sendMessageDTO.recipientId());
         message.setTimestamp(LocalDateTime.now());
