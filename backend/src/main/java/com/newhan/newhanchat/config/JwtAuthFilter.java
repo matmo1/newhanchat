@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.config;
+package com.newhan.newhanchat.config; 
 
 import java.io.IOException;
 import java.util.Collections;
@@ -28,9 +28,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         
         String path = request.getRequestURI();
         
-        // Skip JWT check for public endpoints
+        // --- FIX: Add "/ws-chat" to this check ---
         if (path.startsWith("/api/users/register") || 
-            path.startsWith("/api/users/login")) {
+            path.startsWith("/api/users/login") ||
+            path.startsWith("/ws-chat")) { // Allow WebSocket handshake
+            
             filterChain.doFilter(request, response);
             return;
         }
@@ -54,6 +56,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         }
     }
 
+    // ... (rest of the file stays the same: extractToken, validateToken, createAuthentication)
     private String extractToken(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {

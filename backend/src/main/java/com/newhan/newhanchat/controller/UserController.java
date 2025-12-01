@@ -1,5 +1,7 @@
 package com.newhan.newhanchat.controller;
 
+import java.util.List;
+
 import org.bson.types.ObjectId;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,8 +32,14 @@ public class UserController {
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponseDTO> loginUser(@Valid @RequestBody UserLoginDTO loginDTO) {
-        String token = userService.loginUser(loginDTO);
-        return ResponseEntity.ok(new JwtResponseDTO(token));
+        // Service now returns the full DTO
+        return ResponseEntity.ok(userService.loginUser(loginDTO));
+    }
+
+    // 2. ADD THIS NEW ENDPOINT
+    @GetMapping
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        return ResponseEntity.ok(userService.getAllUsers());
     }
 
     // Get Single User
@@ -54,4 +62,5 @@ public class UserController {
         }
         return ResponseEntity.ok(userService.updateStatus(new ObjectId(id), status));
     }
+    
 }

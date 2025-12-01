@@ -1,14 +1,15 @@
 package com.newhan.newhanchat.repository;
 
-import java.util.Optional;
-
 import org.bson.types.ObjectId;
 import org.springframework.data.mongodb.repository.MongoRepository;
+import org.springframework.data.mongodb.repository.Query;
 
 import com.newhan.newhanchat.model.chatmessage.ChatMessage;
 
+import java.util.List;
+
 public interface ChatMessageRepository extends MongoRepository<ChatMessage, ObjectId> {
 
-    Optional<ChatMessage> findBySenderIdAndRecipientId(ObjectId senderId, ObjectId recipientId);
-
+    @Query("{$or: [ { 'senderId': ?0, 'recipientId': ?1 }, { 'senderId': ?1, 'recipientId': ?0 } ]}")
+    List<ChatMessage> findChatHistory(ObjectId user1, ObjectId user2);
 }

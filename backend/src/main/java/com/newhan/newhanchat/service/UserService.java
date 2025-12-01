@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.newhan.newhanchat.dto.JwtResponseDTO;
 import com.newhan.newhanchat.dto.userdtos.UserLoginDTO;
 import com.newhan.newhanchat.dto.userdtos.UserRegistrationDTO;
 import com.newhan.newhanchat.dto.userdtos.UserResponseDTO;
@@ -43,7 +44,7 @@ public class UserService {
     }
 
     @Transactional
-    public String loginUser(UserLoginDTO dto) {
+    public JwtResponseDTO loginUser(UserLoginDTO dto) {
         User user = userRepository.findByUserName(dto.username())
             .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
 
@@ -51,7 +52,10 @@ public class UserService {
             throw new IllegalArgumentException("Invalid username or password");
         }
 
-        return jwtService.generateToken(user);
+        String token = jwtService.generateToken(user);
+        
+        // DO THIS: Passing (token, userId, username) to match the Record definition
+        return new JwtResponseDTO(token, user.getUserId().toString(), user.getUserName());
     }
 
     public UserResponseDTO getUserById(ObjectId id) {
@@ -66,6 +70,10 @@ public class UserService {
         .orElseThrow(() -> new IllegalArgumentException("User not found"));
         user.getUserStatus().setStatus(status);
         return toDto(userRepository.save(user));
+    }
+
+    public java.util.List<UserResponseDTO> getAllUsers() {
+        return userRepository.findAll().stream().map(this::toDto).toList();
     }
 
     private UserResponseDTO toDto(User user) {

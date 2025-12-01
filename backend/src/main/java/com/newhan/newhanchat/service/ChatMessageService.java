@@ -2,6 +2,7 @@ package com.newhan.newhanchat.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Comparator; // Import Comparator
 
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Service;
@@ -43,9 +44,14 @@ public class ChatMessageService {
         return toDtoMessage(savedMessage);
     }
 
+    // --- FIX: Use the new bidirectional query and sort results ---
     public List<ChatMessageDTO> getChatHistory(ObjectId senderId, ObjectId recipientId) {
-        return chatMessageRepository.findBySenderIdAndRecipientId(senderId, recipientId)
-            .stream()
+        List<ChatMessage> messages = chatMessageRepository.findChatHistory(senderId, recipientId);
+        
+        // Sort oldest to newest
+        messages.sort(Comparator.comparing(ChatMessage::getTimestamp));
+
+        return messages.stream()
             .map(this::toDtoMessage)
             .toList();
     }

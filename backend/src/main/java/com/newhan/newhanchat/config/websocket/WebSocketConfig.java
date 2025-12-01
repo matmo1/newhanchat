@@ -1,4 +1,4 @@
-package com.newhan.newhanchat.config.websocket;
+package com.newhan.newhanchat.config.websocket; // Check package name matches your file
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.simp.config.ChannelRegistration;
@@ -15,17 +15,18 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     public WebSocketConfig(WebSocketAuthenticator webSocketAuthenticator) {
         this.webSocketAuthenticator = webSocketAuthenticator;
     }
+    
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
+        // FIX: Remove .withSockJS()
+        // This allows raw WebSockets (Android/iOS) to connect directly
         registry.addEndpoint("/ws-chat")
-            .setAllowedOrigins("*")
-            .withSockJS();
+            .setAllowedOrigins("*");
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         registry.setApplicationDestinationPrefixes("/app");
-
         registry.enableSimpleBroker("/topic", "/queue");
     }
 
