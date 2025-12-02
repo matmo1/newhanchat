@@ -1,22 +1,36 @@
 services:
-  newhanchat:
-    build: ./backend
-    container_name: newhanchat-app
-    ports:
-      - "8080:8080"
-    depends_on:
-      - mongo
+  # ------------------------------------
+  # INFRASTRUCTURE (Kafka & Zookeeper)
+  # ------------------------------------
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    container_name: zookeeper
     environment:
-      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongo:27017/newhanchat?authSource=admin
-      - SPRING_DATA_MONGODB_DATABASE=newhanchat
-      - SPRING_PROFILES_ACTIVE=prod
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-    restart: unless-stopped
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
 
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # This configuration allows connections from inside Docker (kafka:29092) 
+      # and from your laptop/Android Emulator (localhost:9092)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # ------------------------------------
+  # DATABASES
+  # ------------------------------------
   mongo:
     image: mongo:6.0
     container_name: newhanchat-mongo
@@ -24,12 +38,52 @@ services:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     environment:
       - MONGO_INITDB_DATABASE=newhanchat
       - MONGO_INITDB_ROOT_USERNAME=admin
       - MONGO_INITDB_ROOT_PASSWORD=admin123
-    restart: unless-stopped
+
+  postgres:
+    image: postgres:15
+    container_name: newhanchat-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: newhan_posts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # ------------------------------------
+  # MICROSERVICES
+  # ------------------------------------
+  chat-service:
+    build: ./services/chat-service
+    container_name: chat-service
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mongo
+      - kafka
+    environment:
+      - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongo:27017/newhanchat?authSource=admin
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+  post-service:
+    build: ./services/post-service
+    container_name: post-service
+    ports:
+      - "8081:8081" # Note the different port!
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/newhan_posts
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin123
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 
 volumes:
   mongodb_data:
+  postgres_data:
