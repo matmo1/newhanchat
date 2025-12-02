@@ -76,6 +76,24 @@ public class UserService {
         return userRepository.findAll().stream().map(this::toDto).toList();
     }
 
+    @Transactional
+    public void connectUser(String userId) {
+        if (userId == null) return;
+        userRepository.findById(new ObjectId(userId)).ifPresent(user -> {
+            user.getUserStatus().setOnline(); // Restores preference
+            userRepository.save(user);
+        });
+    }
+
+    @Transactional
+    public void disconnectUser(String userId) {
+        if (userId == null) return;
+        userRepository.findById(new ObjectId(userId)).ifPresent(user -> {
+            user.getUserStatus().setOffline(); // Sets OFFLINE but keeps preference
+            userRepository.save(user);
+        });
+    }
+
     private UserResponseDTO toDto(User user) {
         return new UserResponseDTO(user.getUserId(), 
             user.getUserName(), 

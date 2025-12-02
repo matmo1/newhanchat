@@ -35,6 +35,8 @@ public class WebSocketController {
 
         messagingTemplate.convertAndSendToUser(messageDTO.recipientId().toString(), "/queue/messages", savedMessage);
 
+        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", savedMessage);
+
         messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/notifications", Map.of("type", "DELIVERY_CONFIRMATION", "messageId", savedMessage.id(), "timestamp", LocalDateTime.now()));
     }
 
