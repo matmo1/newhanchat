@@ -12,4 +12,6 @@ public interface ChatMessageRepository extends MongoRepository<ChatMessage, Obje
 
     @Query("{$or: [ { 'senderId': ?0, 'recipientId': ?1 }, { 'senderId': ?1, 'recipientId': ?0 } ]}")
     List<ChatMessage> findChatHistory(ObjectId user1, ObjectId user2);
+
+    Object findBySenderIdAndRecipientId(ObjectId senderId, ObjectId recipientId);
 }
