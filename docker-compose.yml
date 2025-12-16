@@ -21,8 +21,6 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      # This configuration allows connections from inside Docker (kafka:29092) 
-      # and from your laptop/Android Emulator (localhost:9092)
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -58,11 +56,13 @@ services:
   # ------------------------------------
   # MICROSERVICES
   # ------------------------------------
+  
+  # 1. Chat Service (Your original backend)
   chat-service:
     build: ./services/chat-service
     container_name: chat-service
     ports:
-      - "8080:8080"
+      - "8080:8080" # Internal Port (Gateway talks to this)
     depends_on:
       - mongo
       - kafka
@@ -70,11 +70,12 @@ services:
       - SPRING_DATA_MONGODB_URI=mongodb://admin:admin123@mongo:27017/newhanchat?authSource=admin
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
 
+  # 2. Post Service (New Service)
   post-service:
     build: ./services/post-service
     container_name: post-service
     ports:
-      - "8081:8081" # Note the different port!
+      - "8081:8081" # Internal Port
     depends_on:
       - postgres
       - kafka
@@ -83,6 +84,18 @@ services:
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+
+  # 3. API Gateway (The Entry Point)
+  api-gateway:
+    build: ./services/api-gateway
+    container_name: api-gateway
+    ports:
+      - "8082:8082"
+    depends_on:
+      - chat-service
+      - post-service
+    environment:
+      - SERVER_PORT=8082
 
 volumes:
   mongodb_data:
