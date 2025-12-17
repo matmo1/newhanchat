@@ -75,15 +75,20 @@ services:
     build: ./services/post-service
     container_name: post-service
     ports:
-      - "8081:8081" # Internal Port
+      - "8081:8081"
     depends_on:
       - postgres
       - kafka
+    volumes:
+      # Map a local folder 'uploads' to the container's '/app/uploads'
+      - ./uploads:/app/uploads
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/newhan_posts
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      # Tell the app where to save files
+      - FILE_UPLOAD_DIR=/app/uploads
 
   # 3. API Gateway (The Entry Point)
   api-gateway:

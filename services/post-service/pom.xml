@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.newhanchat</groupId>
-	<artifactId>newhanchatpost</artifactId>
+	<artifactId>post-service</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>newhanchatpost</name>
+	<name>post-service</name>
 	<description>Demo project for Spring Boot</description>
 	<url/>
 	<licenses>

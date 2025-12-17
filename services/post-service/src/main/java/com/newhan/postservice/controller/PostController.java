@@ -1,11 +1,14 @@
 package com.newhan.postservice.controller;
 
 import com.newhan.postservice.model.Post;
+import com.newhan.postservice.service.FileStorageService;
 import com.newhan.postservice.service.PostService; // Import Service
 
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -13,10 +16,23 @@ import java.util.List;
 @RequestMapping("/api/posts")
 public class PostController {
 
-    private final PostService postService; // Use Service, not Repository
+    private final PostService postService;
+    private final FileStorageService fileStorageService;
 
-    public PostController(PostService postService) {
+    public PostController(PostService postService, FileStorageService fileStorageService) {
         this.postService = postService;
+        this.fileStorageService = fileStorageService;
+    }
+
+    // 1. Endpoint to Upload Image
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<String> uploadImage(@RequestParam("file") MultipartFile file) {
+        try {
+            String imageUrl = fileStorageService.saveFile(file);
+            return ResponseEntity.ok(imageUrl);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Upload failed");
+        }
     }
 
     @PostMapping
