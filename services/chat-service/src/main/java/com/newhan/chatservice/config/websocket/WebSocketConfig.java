@@ -18,8 +18,6 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // FIX: Remove .withSockJS()
-        // This allows raw WebSockets (Android/iOS) to connect directly
         registry.addEndpoint("/ws-chat")
             .setAllowedOrigins("*");
     }

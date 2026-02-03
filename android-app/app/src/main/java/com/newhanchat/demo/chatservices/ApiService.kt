@@ -34,7 +34,7 @@ interface ApiService {
 }
 
 // CHANGE THIS IP to your computer's IP
-private const val BASE_URL = "http://10.143.133.97:8080"
+private const val BASE_URL = "http://172.28.98.97:8082"
 
 val apiService: ApiService by lazy {
     // 1. Create Client with Interceptor

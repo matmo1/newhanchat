@@ -39,7 +39,7 @@ class ChatManager {
         }
 
         // REPLACE WITH YOUR IP
-        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, "ws://10.143.133.97:8080/ws-chat")
+        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, "ws://172.28.98.97:8082/ws-chat")
         stompClient?.withClientHeartbeat(0)?.withServerHeartbeat(0)
 
         val headers = listOf(StompHeader("Authorization", "Bearer $jwtToken"))
