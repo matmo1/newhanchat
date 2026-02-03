@@ -1,14 +1,19 @@
 package com.newhanchat.demo.chatservices
 
 import com.newhanchat.demo.loginandregister.*
+import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import retrofit2.Response
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Multipart
+import retrofit2.converter.scalars.ScalarsConverterFactory
 import retrofit2.http.POST
+import retrofit2.http.Part
 import retrofit2.http.Query
+import java.util.concurrent.TimeUnit
 
 interface ApiService {
     @POST("/api/users/login")
@@ -20,7 +25,8 @@ interface ApiService {
     @GET("/api/users")
     suspend fun getUsers(): Response<List<UserResponse>>
 
-    @GET("/api/messagages/history")
+    // FIXED: Typo "messagages" -> "messages"
+    @GET("/api/messages/history")
     suspend fun getHistory(
         @Query("senderId") senderId: String,
         @Query("recipientId") recipientId: String
@@ -29,23 +35,41 @@ interface ApiService {
     @retrofit2.http.PATCH("/api/users/{id}/status")
     suspend fun updateUserStatus(
         @retrofit2.http.Path("id") userId: String,
-        @retrofit2.http.Query("status") status: String // ONLINE, BUSY, etc.
+        @retrofit2.http.Query("status") status: String
     ): Response<UserResponse>
+
+    @GET("/api/posts")
+    suspend fun getAllPosts(): Response<List<PostResponse>>
+
+    // --- STEP 1: Upload the file ---
+    @Multipart
+    @POST("/api/posts/upload")
+    suspend fun uploadImage(
+        @Part file: MultipartBody.Part
+    ): Response<String>
+
+    // --- STEP 2: Create the post with the text and image URL ---
+    @POST("/api/posts")
+    suspend fun createPost(
+        @Body request: PostRequest
+    ): Response<PostResponse>
 }
 
-// CHANGE THIS IP to your computer's IP
-private const val BASE_URL = "http://172.28.98.97:8082"
+// Ensure this matches your computer's IP
+private const val BASE_URL = "http://192.168.1.89:8082"
 
 val apiService: ApiService by lazy {
-    // 1. Create Client with Interceptor
     val client = OkHttpClient.Builder()
-        .addInterceptor(AuthInterceptor()) // <--- THIS IS CRITICAL
+        .addInterceptor(AuthInterceptor())
+        .connectTimeout(30, TimeUnit.SECONDS)
+        .readTimeout(30, TimeUnit.SECONDS)
+        .writeTimeout(30, TimeUnit.SECONDS)
         .build()
 
-    // 2. Build Retrofit
     Retrofit.Builder()
         .baseUrl(BASE_URL)
-        .client(client) // <--- YOU MUST HAVE THIS LINE
+        .client(client)
+        .addConverterFactory(ScalarsConverterFactory.create())
         .addConverterFactory(GsonConverterFactory.create())
         .build()
         .create(ApiService::class.java)

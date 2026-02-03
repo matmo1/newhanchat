@@ -2,7 +2,7 @@ package com.newhan.postservice.controller;
 
 import com.newhan.postservice.model.Post;
 import com.newhan.postservice.service.FileStorageService;
-import com.newhan.postservice.service.PostService; // Import Service
+import com.newhan.postservice.service.PostService;
 
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,20 +31,23 @@ public class PostController {
             String imageUrl = fileStorageService.saveFile(file);
             return ResponseEntity.ok(imageUrl);
         } catch (Exception e) {
-            return ResponseEntity.internalServerError().body("Upload failed");
+            // --- FIX: PRINT THE ERROR LOG ---
+            System.err.println("❌ UPLOAD ERROR: " + e.getMessage());
+            e.printStackTrace(); 
+            // -------------------------------
+            return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
         }
     }
 
     @PostMapping
     public ResponseEntity<Post> createPost(
             @RequestBody PostRequest request,
-            Authentication authentication // Inject Authentication
+            Authentication authentication
     ) {
-        // SECURE: Get userId from the token, not the request body!
         String userId = authentication.getName();
         
         Post createdPost = postService.createPost(
-            userId, // Use the verified ID
+            userId, 
             request.getContent(), 
             request.getImageUrl()
         );
@@ -62,12 +65,9 @@ public class PostController {
     }
 
     public static class PostRequest {
-        // Remove userId from here, we don't need the client to send it anymore
-        // private String userId; 
         private String content;
         private String imageUrl;
         
-        // Remove userId getters/setters
         public String getContent() { return content; }
         public void setContent(String content) { this.content = content; }
         public String getImageUrl() { return imageUrl; }

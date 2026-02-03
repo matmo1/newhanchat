@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.2"
+agp = "9.0.0"
 activityCompose = "1.8.0"
 composeBom = "2024.09.00"
 converterGson = "3.0.0"
@@ -7,7 +7,7 @@ coreKtx = "1.10.1"
 espressoCore = "3.5.1"
 junit = "4.13.2"
 junitVersion = "1.1.5"
-kotlin = "2.0.21"
+kotlin = "2.2.10"
 lifecycleRuntimeKtx = "2.6.1"
 # RxJava 3 versions
 rxandroid = "2.1.1"
@@ -16,6 +16,8 @@ rxjava = "2.2.21"
 rxjavaVersion = "3.1.8"
 # Corrected Stomp version alias
 stomp-android = "1.6.6"
+foundationLayout = "1.10.2"
+material3 = "1.4.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -43,6 +45,8 @@ rxjava3-rxjava = { module = "io.reactivex.rxjava3:rxjava", version.ref = "rxjava
 
 # Corrected Stomp Library Definition
 stomp-android = { module = "com.github.NaikSoftware:stomp-android", version.ref = "stomp-android" }
+androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -6,16 +6,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Chat
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-
-// Imports
 import com.newhanchat.demo.chatservices.ChatManager
+import com.newhanchat.demo.chatservices.TokenManager
+import com.newhanchat.demo.chatservices.apiService
 import com.newhanchat.demo.loginandregister.UserResponse
-import com.newhanchat.demo.ui.screens.* // Imports LoginScreen, UserListScreen, etc.
+import com.newhanchat.demo.ui.screens.*
 import com.newhanchat.demo.ui.theme.NewHanChatDemoTheme
 
 class MainActivity : ComponentActivity() {
@@ -28,11 +29,33 @@ class MainActivity : ComponentActivity() {
             NewHanChatDemoTheme {
                 // Global State
                 var currentScreen by remember { mutableStateOf("LOGIN") }
-                var jwtToken by remember { mutableStateOf("") }
                 var myUserId by remember { mutableStateOf("") }
                 var selectedChatUser by remember { mutableStateOf<UserResponse?>(null) }
 
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                // Logic: Show Bottom Bar ONLY when logged in and NOT in a chat
+                val showBottomBar = currentScreen == "USER_LIST" || currentScreen == "POST_LIST"
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize(),
+                    bottomBar = {
+                        if (showBottomBar) {
+                            NavigationBar {
+                                NavigationBarItem(
+                                    icon = { Icon(Icons.Default.List, contentDescription = "Feed") },
+                                    label = { Text("Feed") },
+                                    selected = currentScreen == "POST_LIST",
+                                    onClick = { currentScreen = "POST_LIST" }
+                                )
+                                NavigationBarItem(
+                                    icon = { Icon(Icons.Default.Chat, contentDescription = "Chats") },
+                                    label = { Text("Chats") },
+                                    selected = currentScreen == "USER_LIST",
+                                    onClick = { currentScreen = "USER_LIST" }
+                                )
+                            }
+                        }
+                    }
+                ) { innerPadding ->
                     Surface(
                         modifier = Modifier
                             .fillMaxSize()
@@ -42,23 +65,30 @@ class MainActivity : ComponentActivity() {
                         when (currentScreen) {
                             "LOGIN" -> LoginScreen(
                                 onLoginSuccess = { token, userId, _ ->
-                                    // 1. Save to Compose State (for UI logic)
-                                    jwtToken = token
+                                    // 1. Save State
                                     myUserId = userId
+                                    TokenManager.token = token
 
-                                    // 2. IMPORTANT: Save to TokenManager (for Retrofit/ApiService)
-                                    com.newhanchat.demo.chatservices.TokenManager.token = token
-
-                                    // 3. Connect WebSocket
+                                    // 2. Connect
                                     chatManager.connect(token)
-                                    currentScreen = "USER_LIST"
+
+                                    // 3. Navigate
+                                    currentScreen = "POST_LIST"
                                 },
-                                onNavigateToRegister = { currentScreen = "REGISTER" }
+                                onNavigateToRegister = {
+                                    currentScreen = "REGISTER"
+                                }
                             )
+
                             "REGISTER" -> RegisterScreen(
                                 onRegisterSuccess = { currentScreen = "LOGIN" },
                                 onNavigateToLogin = { currentScreen = "LOGIN" }
                             )
+
+                            "POST_LIST" -> PostListScreen(
+                                apiService = apiService
+                            )
+
                             "USER_LIST" -> UserListScreen(
                                 onUserSelected = { user ->
                                     selectedChatUser = user
@@ -70,12 +100,19 @@ class MainActivity : ComponentActivity() {
                                 },
                                 currentUserId = myUserId
                             )
-                            "CHAT" -> ChatScreen(
-                                chatManager = chatManager,
-                                myUserId = myUserId,
-                                recipient = selectedChatUser!!,
-                                onBack = { currentScreen = "USER_LIST" }
-                            )
+
+                            "CHAT" -> {
+                                if (selectedChatUser != null) {
+                                    ChatScreen(
+                                        chatManager = chatManager,
+                                        myUserId = myUserId,
+                                        recipient = selectedChatUser!!,
+                                        onBack = { currentScreen = "USER_LIST" }
+                                    )
+                                } else {
+                                    currentScreen = "USER_LIST"
+                                }
+                            }
                         }
                     }
                 }

@@ -1,24 +1,25 @@
 package com.newhanchat.demo.ui.screens
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
 import com.newhanchat.demo.chatservices.ChatManager
 import com.newhanchat.demo.chatservices.apiService
 import com.newhanchat.demo.loginandregister.ChatMessage
 import com.newhanchat.demo.loginandregister.ChatMessageDTO
 import com.newhanchat.demo.loginandregister.UserResponse
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChatScreen(
     chatManager: ChatManager,
@@ -27,6 +28,8 @@ fun ChatScreen(
     onBack: () -> Unit
 ) {
     var messageText by remember { mutableStateOf("") }
+
+    // Index 0 = Bottom of screen (Newest message)
     val messages = remember { mutableStateListOf<ChatMessageDTO>() }
 
     // Edit State
@@ -40,105 +43,90 @@ fun ChatScreen(
             val response = apiService.getHistory(senderId = myUserId, recipientId = recipient.id)
             if (response.isSuccessful && response.body() != null) {
                 messages.clear()
-                messages.addAll(response.body()!!)
+                // REVERSE history so newest is at index 0 (Bottom)
+                messages.addAll(response.body()!!.reversed())
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    // 2. Listen for Incoming Messages
+    // 2. Listen for Incoming
     LaunchedEffect(Unit) {
         chatManager.incomingMessages.collect { newMessage ->
             val isFromRecipient = newMessage.senderId == recipient.id
             val isFromMeToRecipient = newMessage.senderId == myUserId && newMessage.recipientId == recipient.id
 
             if (isFromRecipient) {
-                // Message from them -> Add to bottom
-                messages.add(newMessage)
+                // Add to bottom (Index 0)
+                messages.add(0, newMessage)
             } else if (isFromMeToRecipient) {
-                // Message from ME (Echo from server with the real ID)
-
-                // Find the temporary message we added earlier (it has null ID)
-                val pendingIndex = messages.indexOfLast { it.senderId == myUserId && it.id == null }
-
+                // Find pending message (id is null) and replace it
+                val pendingIndex = messages.indexOfFirst { it.senderId == myUserId && it.id == null }
                 if (pendingIndex != -1) {
-                    // Replace the temporary message with the real one (now we have the ID!)
                     messages[pendingIndex] = newMessage
                 } else {
-                    // If we didn't find a pending one (rare), just add it
-                    messages.add(newMessage)
+                    messages.add(0, newMessage)
                 }
             }
         }
     }
 
-    // 3. Listen for Edits
-    LaunchedEffect(Unit) {
-        chatManager.messageUpdates.collect { update ->
-            if (update.type == "MESSAGE_EDIT") {
-                val index = messages.indexOfFirst { it.id == update.messageId }
-                if (index != -1) {
-                    val old = messages[index]
-                    messages[index] = old.copy(content = update.newContent)
-                }
-            }
-        }
-    }
-
-    // Edit Dialog
+    // 3. Edit Dialog logic
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
             title = { Text("Edit Message") },
-            text = {
-                TextField(value = editContent, onValueChange = { editContent = it })
-            },
+            text = { TextField(value = editContent, onValueChange = { editContent = it }) },
             confirmButton = {
                 Button(onClick = {
                     if (editingMessageId != null) {
                         chatManager.editMessage(editingMessageId!!, editContent)
-                        // Optimistic update
                         val index = messages.indexOfFirst { it.id == editingMessageId }
-                        if (index != -1) {
-                            messages[index] = messages[index].copy(content = editContent)
-                        }
+                        if (index != -1) messages[index] = messages[index].copy(content = editContent)
                     }
                     showEditDialog = false
                 }) { Text("Save") }
             },
-            dismissButton = {
-                Button(onClick = { showEditDialog = false }) { Text("Cancel") }
-            }
+            dismissButton = { Button(onClick = { showEditDialog = false }) { Text("Cancel") } }
         )
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        // Header
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Button(onClick = onBack) { Text("<") }
+            IconButton(onClick = onBack) {
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+            }
             Spacer(modifier = Modifier.width(8.dp))
             Text("Chat with ${recipient.fname}", style = MaterialTheme.typography.titleMedium)
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
-        LazyColumn(modifier = Modifier.weight(1f)) {
+        // Messages List
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            reverseLayout = true, // KEY FIX: Anchors content to bottom
+            contentPadding = PaddingValues(bottom = 8.dp)
+        ) {
             items(messages) { msg ->
                 val isMe = msg.senderId == myUserId
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth().padding(4.dp),
                     horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
                 ) {
                     Card(
+                        shape = RoundedCornerShape(12.dp),
                         colors = CardDefaults.cardColors(
                             containerColor = if (isMe) MaterialTheme.colorScheme.primaryContainer else Color.LightGray
                         ),
                         modifier = Modifier
-                            .padding(4.dp)
+                            .widthIn(max = 300.dp)
                             .combinedClickable(
-                                onClick = { },
+                                onClick = {},
                                 onLongClick = {
-                                    if (isMe) {
+                                    if (isMe && msg.id != null) {
                                         editingMessageId = msg.id
                                         editContent = msg.content
                                         showEditDialog = true
@@ -146,12 +134,13 @@ fun ChatScreen(
                                 }
                             )
                     ) {
-                        Text(text = msg.content, modifier = Modifier.padding(8.dp))
+                        Text(text = msg.content, modifier = Modifier.padding(12.dp))
                     }
                 }
             }
         }
 
+        // Input
         Row(verticalAlignment = Alignment.CenterVertically) {
             TextField(
                 value = messageText,
@@ -159,18 +148,20 @@ fun ChatScreen(
                 modifier = Modifier.weight(1f),
                 placeholder = { Text("Type a message...") }
             )
+            Spacer(modifier = Modifier.width(8.dp))
             Button(onClick = {
                 if (messageText.isNotBlank()) {
+                    // Send to Websocket
                     chatManager.sendMessage(ChatMessage(content = messageText, recipientId = recipient.id))
-                    messages.add(
-                        ChatMessageDTO(
-                            id = null,
-                            content = messageText,
-                            senderId = myUserId,
-                            recipientId = recipient.id,
-                            timestamp = null
-                        )
-                    )
+
+                    // Add optimistic local message (id = null)
+                    messages.add(0, ChatMessageDTO(
+                        id = null,
+                        content = messageText,
+                        senderId = myUserId,
+                        recipientId = recipient.id,
+                        timestamp = null
+                    ))
                     messageText = ""
                 }
             }) {
