@@ -7,17 +7,27 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
+import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
 import com.newhanchat.demo.chatservices.ApiService
 import com.newhanchat.demo.loginandregister.PostResponse
 import com.newhanchat.demo.loginandregister.PostRequest
@@ -36,21 +46,34 @@ fun PostListScreen(
     currentUserId: String
 ) {
     var posts by remember { mutableStateOf<List<PostResponse>>(emptyList()) }
+
+    // 1. NEW: Store User Names (ID -> Name)
+    var userMap by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
+
     var isLoading by remember { mutableStateOf(true) }
     var showDialog by remember { mutableStateOf(false) }
+    var zoomedImageUrl by remember { mutableStateOf<String?>(null) }
+
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Refresh function
-    fun refreshPosts() {
+    // 2. UPDATED: Fetch Posts AND Users
+    fun loadData() {
         isLoading = true
         scope.launch(kotlinx.coroutines.Dispatchers.Main) {
             try {
-                val response = apiService.getAllPosts()
-                if (response.isSuccessful) {
-                    posts = response.body() ?: emptyList()
-                } else {
-                    Log.e("PostList", "Error fetching posts: ${response.code()}")
+                // A. Get Posts
+                val postsRes = apiService.getAllPosts()
+                if (postsRes.isSuccessful) {
+                    posts = postsRes.body() ?: emptyList()
+                }
+
+                // B. Get Users (To fix the names)
+                val usersRes = apiService.getUsers()
+                if (usersRes.isSuccessful) {
+                    val users = usersRes.body() ?: emptyList()
+                    // Create map: "12345" -> "John Doe"
+                    userMap = users.associate { it.id to "${it.fname} ${it.lname}" }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -68,7 +91,7 @@ fun PostListScreen(
                 withContext(kotlinx.coroutines.Dispatchers.Main) {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show()
-                        refreshPosts()
+                        loadData() // Refresh
                     } else {
                         Toast.makeText(context, "Failed to delete", Toast.LENGTH_SHORT).show()
                     }
@@ -79,7 +102,7 @@ fun PostListScreen(
         }
     }
 
-    LaunchedEffect(Unit) { refreshPosts() }
+    LaunchedEffect(Unit) { loadData() }
 
     Scaffold(
         floatingActionButton = {
@@ -99,19 +122,30 @@ fun PostListScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(posts) { post ->
-                    // Fallback username if needed
-                    val username = if (post.authorId == currentUserId) "Me" else "User ${post.authorId.take(4)}"
+
+                    // 3. LOGIC: Lookup Name in Map
+                    val realName = userMap[post.authorId] ?: "User ${post.authorId.take(4)}"
+
+                    // Display "Me" if it's you, otherwise the real name
+                    val displayName = if (post.authorId == currentUserId) "Me ($realName)" else realName
 
                     PostCard(
                         post = post,
-                        username = username,
+                        username = displayName, // Pass the fixed name
                         isMine = post.authorId == currentUserId,
                         onDelete = { deletePost(post.id) },
-                        onImageClick = { /* Handle zoom here if needed */ }
+                        onImageClick = { url -> zoomedImageUrl = url }
                     )
                 }
             }
         }
+    }
+
+    if (zoomedImageUrl != null) {
+        FullScreenImageDialog(
+            imageUrl = zoomedImageUrl!!,
+            onDismiss = { zoomedImageUrl = null }
+        )
     }
 
     if (showDialog) {
@@ -120,9 +154,53 @@ fun PostListScreen(
             apiService = apiService,
             onPostCreated = {
                 showDialog = false
-                refreshPosts()
+                loadData()
             }
         )
+    }
+}
+
+@Composable
+fun FullScreenImageDialog(imageUrl: String, onDismiss: () -> Unit) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+        ) {
+            var scale by remember { mutableFloatStateOf(1f) }
+            var offset by remember { mutableStateOf(androidx.compose.ui.geometry.Offset.Zero) }
+
+            AsyncImage(
+                model = imageUrl,
+                contentDescription = "Zoomed Image",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            scale = (scale * zoom).coerceIn(1f, 4f)
+                            offset += pan
+                        }
+                    }
+                    .graphicsLayer(
+                        scaleX = scale,
+                        scaleY = scale,
+                        translationX = offset.x,
+                        translationY = offset.y
+                    )
+            )
+
+            IconButton(
+                onClick = onDismiss,
+                modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
+            ) {
+                Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+            }
+        }
     }
 }
 
@@ -172,39 +250,31 @@ fun CreatePostDialog(
                         try {
                             var uploadedUrl: String? = null
 
-                            // 1. Upload Image (if selected)
                             if (selectedImageUri != null) {
-                                // THIS IS THE FUNCTION THAT WAS MISSING
                                 val filePart = prepareFilePart(context, selectedImageUri!!)
-
                                 if (filePart != null) {
                                     val res = apiService.uploadImage(filePart)
                                     if (res.isSuccessful) {
                                         uploadedUrl = res.body()
-                                        Log.d("PostDebug", "Image uploaded: $uploadedUrl")
                                     } else {
                                         val errorMsg = res.errorBody()?.string()
                                         throw Exception("Upload failed: ${res.code()} - $errorMsg")
                                     }
-                                } else {
-                                    throw Exception("Could not prepare file")
                                 }
                             }
 
-                            // 2. Create Post
                             val res = apiService.createPost(PostRequest(content, uploadedUrl))
 
                             withContext(kotlinx.coroutines.Dispatchers.Main) {
                                 if (res.isSuccessful) {
                                     onPostCreated()
                                 } else {
-                                    val errorMsg = res.errorBody()?.string()
-                                    Toast.makeText(context, "Post failed: $errorMsg", Toast.LENGTH_LONG).show()
+                                    Toast.makeText(context, "Post failed", Toast.LENGTH_LONG).show()
                                     isPosting = false
                                 }
                             }
                         } catch (e: Exception) {
-                            e.printStackTrace() // PRINT ERROR TO LOGCAT
+                            e.printStackTrace()
                             withContext(kotlinx.coroutines.Dispatchers.Main) {
                                 Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
                                 isPosting = false
@@ -220,24 +290,16 @@ fun CreatePostDialog(
     )
 }
 
-// --- THIS IS THE MISSING FUNCTION ---
 fun prepareFilePart(context: Context, uri: Uri): MultipartBody.Part? {
     return try {
         val contentResolver = context.contentResolver
-        // Create a temp file in the app's cache directory
         val tempFile = File(context.cacheDir, "upload_temp_${System.currentTimeMillis()}.jpg")
-
-        // Copy the image from the Gallery URI to the temp file
         val inputStream = contentResolver.openInputStream(uri) ?: return null
         val outputStream = FileOutputStream(tempFile)
         inputStream.copyTo(outputStream)
         inputStream.close()
         outputStream.close()
-
-        // Create the RequestBody (standard Retrofit logic)
         val requestBody = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
-
-        // Create the MultipartBody.Part
         MultipartBody.Part.createFormData("file", tempFile.name, requestBody)
     } catch (e: Exception) {
         e.printStackTrace()
