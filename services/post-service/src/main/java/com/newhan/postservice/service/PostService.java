@@ -28,4 +28,15 @@ public class PostService {
     public List<Post> getUserPosts(String userId) {
         return postRepository.findByUserIdOrderByCreatedAtDesc(userId);
     }
+
+    public void deletePost(Long postId, String userId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("Post does't exist"));
+
+        if (!post.getUserId().equals(userId)) {
+            throw new RuntimeException("Not your post");
+        }
+
+        postRepository.delete(post);
+    }
 }

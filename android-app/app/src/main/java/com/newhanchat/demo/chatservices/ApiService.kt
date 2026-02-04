@@ -10,8 +10,10 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.Multipart
 import retrofit2.converter.scalars.ScalarsConverterFactory
+import retrofit2.http.DELETE
 import retrofit2.http.POST
 import retrofit2.http.Part
+import retrofit2.http.Path
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
@@ -53,6 +55,9 @@ interface ApiService {
     suspend fun createPost(
         @Body request: PostRequest
     ): Response<PostResponse>
+
+    @DELETE("/api/posts/{id}")
+    suspend fun deletePost(@Path("id") postId: Long): Response<Void>
 }
 
 // Ensure this matches your computer's IP

@@ -31,10 +31,8 @@ public class PostController {
             String imageUrl = fileStorageService.saveFile(file);
             return ResponseEntity.ok(imageUrl);
         } catch (Exception e) {
-            // --- FIX: PRINT THE ERROR LOG ---
             System.err.println("❌ UPLOAD ERROR: " + e.getMessage());
             e.printStackTrace(); 
-            // -------------------------------
             return ResponseEntity.internalServerError().body("Upload failed: " + e.getMessage());
         }
     }
@@ -64,6 +62,15 @@ public class PostController {
         return postService.getUserPosts(userId);
     }
 
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deletePost(@PathVariable Long id, Authentication authentication) {
+            try {
+                postService.deletePost(id, authentication.getName());
+                return ResponseEntity.ok().build();
+            } catch (RuntimeException e) {
+                return ResponseEntity.status(403).body(e.getMessage());
+            }
+        }
     public static class PostRequest {
         private String content;
         private String imageUrl;

@@ -27,12 +27,10 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             NewHanChatDemoTheme {
-                // Global State
                 var currentScreen by remember { mutableStateOf("LOGIN") }
                 var myUserId by remember { mutableStateOf("") }
                 var selectedChatUser by remember { mutableStateOf<UserResponse?>(null) }
 
-                // Logic: Show Bottom Bar ONLY when logged in and NOT in a chat
                 val showBottomBar = currentScreen == "USER_LIST" || currentScreen == "POST_LIST"
 
                 Scaffold(
@@ -56,28 +54,16 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    Surface(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(innerPadding),
-                        color = MaterialTheme.colorScheme.background
-                    ) {
+                    Surface(modifier = Modifier.fillMaxSize().padding(innerPadding)) {
                         when (currentScreen) {
                             "LOGIN" -> LoginScreen(
                                 onLoginSuccess = { token, userId, _ ->
-                                    // 1. Save State
                                     myUserId = userId
                                     TokenManager.token = token
-
-                                    // 2. Connect
                                     chatManager.connect(token)
-
-                                    // 3. Navigate
                                     currentScreen = "POST_LIST"
                                 },
-                                onNavigateToRegister = {
-                                    currentScreen = "REGISTER"
-                                }
+                                onNavigateToRegister = { currentScreen = "REGISTER" }
                             )
 
                             "REGISTER" -> RegisterScreen(
@@ -85,8 +71,10 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToLogin = { currentScreen = "LOGIN" }
                             )
 
+                            // FIXED: Passing myUserId here
                             "POST_LIST" -> PostListScreen(
-                                apiService = apiService
+                                apiService = apiService,
+                                currentUserId = myUserId
                             )
 
                             "USER_LIST" -> UserListScreen(
@@ -118,10 +106,5 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        chatManager.disconnect()
     }
 }
