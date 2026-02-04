@@ -26,15 +26,38 @@ public class JwtAuthFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
+        
+        // --- EXTREME DEBUGGING ---
+        String path = request.getRequestURI();
+        // Only log API requests to avoid spam
+        if (path.startsWith("/api/")) {
+             System.out.println("🔍 Filter checking: " + path);
+             String header = request.getHeader("Authorization");
+             String param = request.getParameter("token");
+             
+             if (header == null && param == null) {
+                 System.out.println("   ⚠️ No Token found in Header or URL");
+             } else if (header != null) {
+                 System.out.println("   ✅ Found Header Token: " + header.substring(0, Math.min(15, header.length())) + "...");
+             } else {
+                 System.out.println("   ✅ Found URL Token: " + param.substring(0, Math.min(15, param.length())) + "...");
+             }
+        }
+        // -------------------------
 
         try {
             String token = extractToken(request);
-            if (token != null && validateToken(token)) {
-                Authentication auth = createAuthentication(token);
-                SecurityContextHolder.getContext().setAuthentication(auth);
+            if (token != null) {
+                if (validateToken(token)) {
+                    Authentication auth = createAuthentication(token);
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                } else {
+                    System.err.println("❌ Token Invalid for: " + path);
+                }
             }
         } catch (Exception e) {
-            // Token invalid or expired - SecurityContext remains empty, request will fail with 403
+            System.err.println("❌ Filter Crash: " + e.getMessage());
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);
@@ -44,6 +67,11 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         String bearerToken = request.getHeader("Authorization");
         if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
             return bearerToken.substring(7);
+        }
+        // Check URL for images
+        String paramToken = request.getParameter("token");
+        if (paramToken != null && !paramToken.isEmpty()) {
+            return paramToken;
         }
         return null;
     }
@@ -56,20 +84,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 .parseClaimsJws(token);
             return true;
         } catch (Exception e) {
+            System.err.println("❌ Token Validation Failed: " + e.getMessage());
             return false;
         }
     }
 
     private Authentication createAuthentication(String token) {
-        // Extract the user ID (subject) from the token
         String userId = Jwts.parserBuilder()
             .setSigningKey(Keys.hmacShaKeyFor(secretKey.getBytes()))
             .build()
             .parseClaimsJws(token)
             .getBody()
             .getSubject();
-
-        // Create an authenticated token with the User ID
         return new UsernamePasswordAuthenticationToken(userId, null, Collections.emptyList());
     }
 }

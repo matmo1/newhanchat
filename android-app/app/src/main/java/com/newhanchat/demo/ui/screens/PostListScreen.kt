@@ -2,6 +2,7 @@ package com.newhanchat.demo.ui.screens
 
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import com.newhanchat.demo.chatservices.ApiService
 import com.newhanchat.demo.loginandregister.PostResponse
 import com.newhanchat.demo.loginandregister.PostRequest
+import com.newhanchat.demo.ui.components.PostCard
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -27,15 +29,11 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
-import com.newhanchat.demo.ui.components.PostCard
-
-// NOTE: Must match your Server IP
-private const val SERVER_BASE_URL = "http://192.168.1.89:8082"
 
 @Composable
 fun PostListScreen(
     apiService: ApiService,
-    currentUserId: String // Received from MainActivity
+    currentUserId: String
 ) {
     var posts by remember { mutableStateOf<List<PostResponse>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
@@ -51,6 +49,8 @@ fun PostListScreen(
                 val response = apiService.getAllPosts()
                 if (response.isSuccessful) {
                     posts = response.body() ?: emptyList()
+                } else {
+                    Log.e("PostList", "Error fetching posts: ${response.code()}")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
@@ -68,7 +68,7 @@ fun PostListScreen(
                 withContext(kotlinx.coroutines.Dispatchers.Main) {
                     if (response.isSuccessful) {
                         Toast.makeText(context, "Post deleted", Toast.LENGTH_SHORT).show()
-                        refreshPosts() // Reload list
+                        refreshPosts()
                     } else {
                         Toast.makeText(context, "Failed to delete", Toast.LENGTH_SHORT).show()
                     }
@@ -99,10 +99,15 @@ fun PostListScreen(
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 items(posts) { post ->
+                    // Fallback username if needed
+                    val username = if (post.authorId == currentUserId) "Me" else "User ${post.authorId.take(4)}"
+
                     PostCard(
                         post = post,
+                        username = username,
                         isMine = post.authorId == currentUserId,
-                        onDelete = { deletePost(post.id) }
+                        onDelete = { deletePost(post.id) },
+                        onImageClick = { /* Handle zoom here if needed */ }
                     )
                 }
             }
@@ -162,26 +167,48 @@ fun CreatePostDialog(
                 onClick = {
                     if (content.isBlank()) return@Button
                     isPosting = true
+
                     scope.launch(kotlinx.coroutines.Dispatchers.IO) {
                         try {
                             var uploadedUrl: String? = null
+
+                            // 1. Upload Image (if selected)
                             if (selectedImageUri != null) {
+                                // THIS IS THE FUNCTION THAT WAS MISSING
                                 val filePart = prepareFilePart(context, selectedImageUri!!)
+
                                 if (filePart != null) {
                                     val res = apiService.uploadImage(filePart)
-                                    if (res.isSuccessful) uploadedUrl = res.body()
+                                    if (res.isSuccessful) {
+                                        uploadedUrl = res.body()
+                                        Log.d("PostDebug", "Image uploaded: $uploadedUrl")
+                                    } else {
+                                        val errorMsg = res.errorBody()?.string()
+                                        throw Exception("Upload failed: ${res.code()} - $errorMsg")
+                                    }
+                                } else {
+                                    throw Exception("Could not prepare file")
                                 }
                             }
+
+                            // 2. Create Post
                             val res = apiService.createPost(PostRequest(content, uploadedUrl))
+
                             withContext(kotlinx.coroutines.Dispatchers.Main) {
-                                if (res.isSuccessful) onPostCreated()
-                                else {
-                                    Toast.makeText(context, "Error", Toast.LENGTH_SHORT).show()
+                                if (res.isSuccessful) {
+                                    onPostCreated()
+                                } else {
+                                    val errorMsg = res.errorBody()?.string()
+                                    Toast.makeText(context, "Post failed: $errorMsg", Toast.LENGTH_LONG).show()
                                     isPosting = false
                                 }
                             }
                         } catch (e: Exception) {
-                            withContext(kotlinx.coroutines.Dispatchers.Main) { isPosting = false }
+                            e.printStackTrace() // PRINT ERROR TO LOGCAT
+                            withContext(kotlinx.coroutines.Dispatchers.Main) {
+                                Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_LONG).show()
+                                isPosting = false
+                            }
                         }
                     }
                 }
@@ -193,16 +220,27 @@ fun CreatePostDialog(
     )
 }
 
+// --- THIS IS THE MISSING FUNCTION ---
 fun prepareFilePart(context: Context, uri: Uri): MultipartBody.Part? {
     return try {
         val contentResolver = context.contentResolver
-        val tempFile = File(context.cacheDir, "upload_temp.jpg")
+        // Create a temp file in the app's cache directory
+        val tempFile = File(context.cacheDir, "upload_temp_${System.currentTimeMillis()}.jpg")
+
+        // Copy the image from the Gallery URI to the temp file
         val inputStream = contentResolver.openInputStream(uri) ?: return null
         val outputStream = FileOutputStream(tempFile)
         inputStream.copyTo(outputStream)
         inputStream.close()
         outputStream.close()
+
+        // Create the RequestBody (standard Retrofit logic)
         val requestBody = tempFile.asRequestBody("image/jpeg".toMediaTypeOrNull())
+
+        // Create the MultipartBody.Part
         MultipartBody.Part.createFormData("file", tempFile.name, requestBody)
-    } catch (e: Exception) { null }
+    } catch (e: Exception) {
+        e.printStackTrace()
+        null
+    }
 }
