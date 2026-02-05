@@ -1,59 +1,82 @@
 package com.newhan.chatservice.controller;
 
-import java.time.LocalDateTime;
-import java.util.Map;
-
-import org.bson.types.ObjectId;
+import com.newhan.chatservice.dto.messagedtos.ChatMessageDTO;
+import com.newhan.chatservice.dto.messagedtos.EditedMessageDTO;
+import com.newhan.chatservice.dto.messagedtos.SendMessageDTO;
+import com.newhan.chatservice.service.ChatMessageService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 
-import com.newhan.chatservice.dto.messagedtos.ChatMessageDTO;
-import com.newhan.chatservice.dto.messagedtos.EditedMessageDTO;
-import com.newhan.chatservice.dto.messagedtos.SendMessageDTO;
-import com.newhan.chatservice.service.ChatMessageService;
+import java.util.Map;
 
 @Controller
+@RequiredArgsConstructor
 public class WebSocketController {
+
     private final SimpMessagingTemplate messagingTemplate;
     private final ChatMessageService chatMessageService;
 
-    public WebSocketController(SimpMessagingTemplate messagingTemplate, ChatMessageService chatMessageService) {
-        this.messagingTemplate = messagingTemplate;
-        this.chatMessageService = chatMessageService;
-    }
-
+    // --- 1. SEND MESSAGE ---
     @MessageMapping("/chat")
     public void processMessage(@Payload SendMessageDTO messageDTO,
                                Authentication authentication) {
 
-        String userIdString = authentication.getName();
-        ObjectId senderId = new ObjectId(userIdString);
+        // 1. Get Sender ID (String UUID from the JWT Token)
+        String senderId = authentication.getName();
+
+        // 2. Delegate to Service
+        // The service should create the Entity, set timestamps, and return the DTO
         ChatMessageDTO savedMessage = chatMessageService.saveMessage(messageDTO, senderId);
 
-        messagingTemplate.convertAndSendToUser(messageDTO.recipientId().toString(), "/queue/messages", savedMessage);
+        // 3. Send to Recipient's Queue
+        messagingTemplate.convertAndSendToUser(
+                savedMessage.recipientId(), 
+                "/queue/messages", 
+                savedMessage
+        );
 
-        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/messages", savedMessage);
-
-        messagingTemplate.convertAndSendToUser(senderId.toString(), "/queue/notifications", Map.of("type", "DELIVERY_CONFIRMATION", "messageId", savedMessage.id(), "timestamp", LocalDateTime.now()));
+        // 4. Send Confirmation to Sender's Queue (so UI updates ID/Status)
+        messagingTemplate.convertAndSendToUser(
+                savedMessage.senderId(), 
+                "/queue/messages", 
+                savedMessage
+        );
     }
 
+    // --- 2. EDIT MESSAGE ---
     @MessageMapping("/edit")
-    public void handleEdit(
-        @Payload EditedMessageDTO dto,
-        Authentication authentication
-    ) {
-        String userIdString = authentication.getName();
-        ObjectId requesterId = new ObjectId(userIdString);
+    public void handleEdit(@Payload EditedMessageDTO dto,
+                           Authentication authentication) {
+        
+        String requesterId = authentication.getName();
+
         ChatMessageDTO editedMessage = chatMessageService.editMessage(dto, requesterId);
 
-        messagingTemplate.convertAndSendToUser(editedMessage.recipientId().toString(), "/queue/message-updates", 
-            Map.of(
+        if (editedMessage != null) {
+            Map<String, Object> updatePayload = Map.of(
                 "type", "MESSAGE_EDIT",
                 "messageId", editedMessage.id(),
                 "newContent", editedMessage.content(),
-                "editedAt", editedMessage.lastEdited()));
+                "editedAt", editedMessage.lastEdited()
+            );
+
+            // Notify Recipient
+            messagingTemplate.convertAndSendToUser(
+                editedMessage.recipientId(), 
+                "/queue/message-updates", 
+                updatePayload
+            );
+            
+            // Notify Sender
+            messagingTemplate.convertAndSendToUser(
+                editedMessage.senderId(), 
+                "/queue/message-updates", 
+                updatePayload
+            );
+        }
     }
 }

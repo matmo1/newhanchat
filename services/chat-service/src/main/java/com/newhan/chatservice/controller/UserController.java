@@ -32,7 +32,7 @@ public class UserController {
     @MessageMapping("/user.disconnectUser")
     @SendTo("/user/public")
     public User disconnectUser(@Payload User user) {
-        userService.disconnect(user);
+        userService.disconnect(user.getNickName());
         return user;
     }
 

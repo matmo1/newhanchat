@@ -1,37 +1,33 @@
 package com.newhan.chatservice.config.websocket;
 
-import org.springframework.context.event.EventListener;
-import org.springframework.stereotype.Component;
-import org.springframework.web.socket.messaging.SessionConnectedEvent;
-import org.springframework.web.socket.messaging.SessionDisconnectEvent;
-import java.security.Principal;
 import com.newhan.chatservice.service.UserService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.event.EventListener;
+import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.socket.messaging.SessionDisconnectEvent;
+
+import java.util.Map;
 
 @Component
+@Slf4j
+@RequiredArgsConstructor
 public class WebSocketEventListener {
 
     private final UserService userService;
 
-    public WebSocketEventListener(UserService userService) {
-        this.userService = userService;
-    }
-
-    @EventListener
-    public void handleWebSocketConnectListener(SessionConnectedEvent event) {
-        Principal user = event.getUser();
-        if (user != null) {
-            // user.getName() is the userId (set in WebSocketAuthenticator)
-            System.out.println("✅ User Connected: " + user.getName());
-            userService.connectUser(user.getName());
-        }
-    }
-
     @EventListener
     public void handleWebSocketDisconnectListener(SessionDisconnectEvent event) {
-        Principal user = event.getUser();
-        if (user != null) {
-            System.out.println("❌ User Disconnected: " + user.getName());
-            userService.disconnectUser(user.getName());
+        StompHeaderAccessor headerAccessor = StompHeaderAccessor.wrap(event.getMessage());
+        Map<String, Object> sessionAttributes = headerAccessor.getSessionAttributes();
+
+        if (sessionAttributes != null) {
+            String username = (String) sessionAttributes.get("username");
+            if (username != null) {
+                log.info("User Disconnected: {}", username);
+                userService.disconnect(username);
+            }
         }
     }
 }

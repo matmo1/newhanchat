@@ -1,87 +1,118 @@
 package com.newhan.chatservice.service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Comparator; // Import Comparator
-
-import org.bson.types.ObjectId;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.newhan.chatservice.dto.messagedtos.ChatMessageDTO;
 import com.newhan.chatservice.dto.messagedtos.EditedMessageDTO;
 import com.newhan.chatservice.dto.messagedtos.SendMessageDTO;
 import com.newhan.chatservice.model.chatmessage.ChatMessage;
 import com.newhan.chatservice.model.chatmessage.MessageSatus;
 import com.newhan.chatservice.repository.ChatMessageRepository;
-import com.newhan.chatservice.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class ChatMessageService {
-    private final ChatMessageRepository chatMessageRepository;
-    private final UserRepository userRepository;
 
-    public ChatMessageService(ChatMessageRepository chatMessageRepository, UserRepository userRepository) {
-        this.chatMessageRepository = chatMessageRepository;
-        this.userRepository = userRepository;
+    private final ChatMessageRepository repository;
+
+    /**
+     * Saves a new message to MongoDB.
+     * Generates a stateless ChatID so it belongs to the conversation between A and B.
+     */
+    public ChatMessageDTO saveMessage(SendMessageDTO dto, String senderId) {
+        // 1. Generate the Room ID (Stateless)
+        String chatId = generateChatId(senderId, dto.recipientId());
+
+        // 2. Create Entity
+        ChatMessage message = ChatMessage.builder()
+                .chatId(chatId)
+                .senderId(senderId)
+                .recipientId(dto.recipientId())
+                .content(dto.content())
+                .timestamp(new Date()) // Mongo uses legacy Date
+                .status(MessageSatus.DELIVERED)
+                .build();
+
+        // 3. Save (Mongo generates the unique 'id')
+        ChatMessage saved = repository.save(message);
+
+        // 4. Return DTO
+        return mapToDTO(saved);
     }
 
-    @Transactional
-    public ChatMessageDTO saveMessage(SendMessageDTO sendMessageDTO, ObjectId senderId) {
-        userRepository.findById(senderId)
-            .orElseThrow(() -> new IllegalArgumentException("Sender not found"));
-        userRepository.findById(sendMessageDTO.recipientId())
-            .orElseThrow(() -> new IllegalArgumentException("Recipient not found"));
+    /**
+     * Updates an existing message content.
+     * Verifies that the requester is the original sender.
+     */
+    public ChatMessageDTO editMessage(EditedMessageDTO dto, String requesterId) {
+        Optional<ChatMessage> optionalMsg = repository.findById(dto.messageId());
 
-        ChatMessage message = new ChatMessage(null);
-        message.setMessageContent(sendMessageDTO.content());
-        message.setSenderId(senderId);
-        message.setReciepentId(sendMessageDTO.recipientId());
-        message.setTimestamp(LocalDateTime.now());
-        message.setStatus(MessageSatus.DELIVERED);
+        if (optionalMsg.isPresent()) {
+            ChatMessage msg = optionalMsg.get();
 
-        ChatMessage savedMessage = chatMessageRepository.save(message);
-        return toDtoMessage(savedMessage);
-    }
+            // SECURITY: Only allow the original sender to edit
+            if (msg.getSenderId().equals(requesterId)) {
+                msg.setContent(dto.newContent());
+                
+                // If you add 'edited' fields to your Entity later, update them here:
+                // msg.setEdited(true);
+                // msg.setLastEdited(new Date());
 
-    // --- FIX: Use the new bidirectional query and sort results ---
-    public List<ChatMessageDTO> getChatHistory(ObjectId senderId, ObjectId recipientId) {
-        List<ChatMessage> messages = chatMessageRepository.findChatHistory(senderId, recipientId);
-        
-        // Sort oldest to newest
-        messages.sort(Comparator.comparing(ChatMessage::getTimestamp));
-
-        return messages.stream()
-            .map(this::toDtoMessage)
-            .toList();
-    }
-
-    public ChatMessageDTO editMessage(EditedMessageDTO dto, ObjectId requesterId) {
-        ChatMessage message = chatMessageRepository.findById(dto.mesId())
-            .orElseThrow(() -> new IllegalArgumentException("Message not found"));
-        
-        if (!message.getSenderId().equals(requesterId)) {
-            throw new SecurityException("Only the sender can edit the message");
+                ChatMessage updated = repository.save(msg);
+                return mapToDTO(updated);
+            }
         }
-
-        message.setMessageContent(dto.newContent());
-        message.setEdited(true);
-        message.setLastEdited();
-
-        ChatMessage updated = chatMessageRepository.save(message);
-        return toDtoMessage(updated);
+        return null; // Or throw custom exception "Message not found or Unauthorized"
     }
 
-    private ChatMessageDTO toDtoMessage(ChatMessage chatMessage) {
+    /**
+     * Fetches chat history between two users.
+     */
+    public List<ChatMessageDTO> findChatMessages(String senderId, String recipientId) {
+        String chatId = generateChatId(senderId, recipientId);
+        
+        List<ChatMessage> messages = repository.findByChatId(chatId);
+        
+        return messages.stream()
+                .map(this::mapToDTO)
+                .collect(Collectors.toList());
+    }
+
+    // --- Helpers ---
+
+    private ChatMessageDTO mapToDTO(ChatMessage msg) {
         return new ChatMessageDTO(
-            chatMessage.getId(), 
-            chatMessage.getContent(), 
-            chatMessage.getSenderId(), 
-            chatMessage.getReciepentId(), 
-            chatMessage.getTimestamp(), 
-            chatMessage.getStatus(), 
-            chatMessage.getEdited(),
-            chatMessage.getLastEdited()
-            );
+                msg.getId(),
+                msg.getSenderId(),
+                msg.getRecipientId(),
+                msg.getContent(),
+                convertToLocalDateTime(msg.getTimestamp()),
+                msg.getStatus(),
+                false, // Todo: Add 'boolean edited' to your Mongo Entity to support this
+                null   // Todo: Add 'Date lastEdited' to your Mongo Entity to support this
+        );
+    }
+
+    private LocalDateTime convertToLocalDateTime(Date dateToConvert) {
+        if (dateToConvert == null) return LocalDateTime.now();
+        return dateToConvert.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
+    }
+
+    private String generateChatId(String senderId, String recipientId) {
+        if (senderId.compareTo(recipientId) < 0) {
+            return senderId + "_" + recipientId;
+        } else {
+            return recipientId + "_" + senderId;
+        }
     }
 }
