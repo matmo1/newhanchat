@@ -11,8 +11,6 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secretKey;
 
-    // --- REMOVED: generateToken() (Chat Service does not issue IDs) ---
-
     public boolean validateToken(String token) {
         try {
             Jwts.parserBuilder()
@@ -31,6 +29,6 @@ public class JwtService {
             .build()
             .parseClaimsJws(token)
             .getBody()
-            .getSubject();
+            .get("username", String.class); // Assuming username is in claims
     }
 }

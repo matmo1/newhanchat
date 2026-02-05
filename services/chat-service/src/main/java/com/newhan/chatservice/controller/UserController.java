@@ -20,6 +20,8 @@ public class UserController {
         this.userService = userService;
     }
 
+    // --- WebSocket Handlers (For Real-time Status) ---
+
     @MessageMapping("/user.addUser")
     @SendTo("/user/public")
     public User addUser(@Payload User user) {
@@ -34,9 +36,12 @@ public class UserController {
         return user;
     }
 
+    // --- REST Endpoint (For initial list loading) ---
+    
     @GetMapping("/users")
     public ResponseEntity<List<User>> findConnectedUsers() {
         return ResponseEntity.ok(userService.findConnectedUsers());
     }
     
+    // REMOVED: /login and /register (They belong to user-service now)
 }
