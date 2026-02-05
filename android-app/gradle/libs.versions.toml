@@ -1,54 +1,75 @@
 [versions]
-agp = "9.0.0"
-activityCompose = "1.8.0"
-composeBom = "2024.09.00"
-converterGson = "3.0.0"
-coreKtx = "1.10.1"
-espressoCore = "3.5.1"
+agp = "9.0.0" # Stabilized version for 2025-2026 development
+activityCompose = "1.12.3"
+composeBom = "2026.01.01" # Updated to a 2025 BOM for SDK 36 compatibility
+# Retrofit 2.11.0 is the current standard; 3.0.0 is still in alpha/beta for most
+hiltAndroid = "2.59.1"
+hiltNavigationCompose = "1.3.0"
+navigationCompose = "2.9.7"
+retrofit = "2.11.0"
+coreKtx = "1.17.0"
+espressoCore = "3.7.0"
 junit = "4.13.2"
-junitVersion = "1.1.5"
-kotlin = "2.2.10"
-lifecycleRuntimeKtx = "2.6.1"
-# RxJava 3 versions
-rxandroid = "2.1.1"
-rxandroidVersion = "3.0.2"
-rxjava = "2.2.21"
-rxjavaVersion = "3.1.8"
-# Corrected Stomp version alias
-stomp-android = "1.6.6"
-foundationLayout = "1.10.2"
-material3 = "1.4.0"
+junitVersion = "1.3.0"
+kotlin = "2.3.0" # Match with your Kotlin Gradle Plugin version
+lifecycleRuntimeKtx = "2.10.0"
+rxjava2 = "2.2.21"
+# RxJava 3 (Required by modern Stomp implementations)
+rxandroid3 = "3.0.2"
+rxjava3 = "3.1.12"
+# Coil & Icons
+coil = "3.3.0"
+# Stomp
+stomp = "1.6.6"
+media3CommonKtx = "1.9.1"
+okhttp = "5.3.2"
+ksp = "2.3.5"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
-converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
+androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }
+androidx-lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycleRuntimeKtx" }
+androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
+hilt-android = { module = "com.google.dagger:hilt-android", version.ref = "hiltAndroid" }
+hilt-compiler = { module = "com.google.dagger:hilt-compiler", version.ref = "hiltAndroid" }
+okhttp = { module = "com.squareup.okhttp3:okhttp", version.ref = "okhttp" }
+retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit" }
+converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "retrofit" }
+converter-scalars = { module = "com.squareup.retrofit2:converter-scalars", version.ref = "retrofit" }
+
+# Testing
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+
+# Lifecycle & Activity
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
+
+# Compose (Using BOM for version management)
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-compose-ui = { group = "androidx.compose.ui", name = "ui" }
-androidx-compose-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
-androidx-compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
-androidx-compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
-androidx-compose-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
-androidx-compose-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
-androidx-compose-material3 = { group = "androidx.compose.material3", name = "material3" }
-retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "converterGson" }
+androidx-ui = { group = "androidx.compose.ui", name = "ui" }
+androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }
+androidx-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
+androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 
-# RxJava 3 Libraries - Use these for the Stomp library
-rxandroid = { module = "io.reactivex.rxjava2:rxandroid", version.ref = "rxandroid" }
-rxjava = { module = "io.reactivex.rxjava2:rxjava", version.ref = "rxjava" }
-rxjava3-rxandroid = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroidVersion" }
-rxjava3-rxjava = { module = "io.reactivex.rxjava3:rxjava", version.ref = "rxjavaVersion" }
+# RxJava 3 (Cleaning up the duplicates)
+rxjava2 = { module = "io.reactivex.rxjava2:rxjava", version.ref = "rxjava2" }
+rxjava3 = { module = "io.reactivex.rxjava3:rxjava", version.ref = "rxjava3" }
+rxandroid3 = { module = "io.reactivex.rxjava3:rxandroid", version.ref = "rxandroid3" }
 
-# Corrected Stomp Library Definition
-stomp-android = { module = "com.github.NaikSoftware:stomp-android", version.ref = "stomp-android" }
-androidx-compose-foundation-layout = { group = "androidx.compose.foundation", name = "foundation-layout", version.ref = "foundationLayout" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+# Third Party
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+stomp-android = { module = "com.github.NaikSoftware:StompProtocolAndroid", version.ref = "stomp" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+google-dagger-hilt = { id = "com.google.dagger.hilt.android", version.ref = "hiltAndroid" }
+google-devtools-ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

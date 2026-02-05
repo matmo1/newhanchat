@@ -15,9 +15,10 @@
         android:theme="@style/Theme.NewHanChatDemo"
         android:usesCleartextTraffic="true">
         <activity
-            android:name=".MainActivity"
+            android:name=".NewHanChatApp"
             android:exported="true"
-            android:theme="@style/Theme.NewHanChatDemo">
+            android:theme="@style/Theme.NewHanChatDemo"
+            tools:ignore="Instantiatable">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
