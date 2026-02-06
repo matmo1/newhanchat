@@ -28,7 +28,7 @@ public class UserController {
     public ResponseEntity<JwtResponseDTO> login(@RequestBody UserLoginDTO dto) {
         String token = userService.login(dto);
         // Fetch user to return ID and username
-        User user = userService.getProfile(userService.getProfile(dto.getUsername()).getId()); 
+        User user = userService.getProfile(userService.getProfile(dto.username()).getId()); 
         return ResponseEntity.ok(new JwtResponseDTO(token, user.getId(), user.getUsername()));
     }
 

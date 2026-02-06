@@ -24,25 +24,25 @@ public class UserService {
     }
 
     public void register(UserRegistrationDTO dto) {
-        if (userRepository.existsByUsername(dto.getUsername())) {
+        if (userRepository.existsByUsername(dto.userName())) {
             throw new RuntimeException("Username already exists");
         }
         User user = new User();
-        user.setUsername(dto.getUsername());
-        user.setFirstName(dto.getFname());
-        user.setLastName(dto.getLname());
-        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        user.setUsername(dto.userName());
+        user.setFirstName(dto.fname());
+        user.setLastName(dto.lname());
+        user.setPassword(passwordEncoder.encode(dto.password()));
         // Handle Date parsing carefully in production
-        user.setDateOfBirth(LocalDateTime.parse(dto.getDob())); 
+        user.setDateOfBirth(LocalDateTime.parse(dto.dOfBirth().toString())); 
         
         userRepository.save(user);
     }
 
     public String login(UserLoginDTO dto) {
-        User user = userRepository.findByUsername(dto.getUsername())
+        User user = userRepository.findByUsername(dto.username())
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
-        if (!passwordEncoder.matches(dto.getPassword(), user.getPassword())) {
+        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
             throw new RuntimeException("Invalid credentials");
         }
 

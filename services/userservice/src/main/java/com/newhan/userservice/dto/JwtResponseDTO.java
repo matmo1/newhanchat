@@ -1,4 +1,4 @@
-package com.newhan.chatservice.dto;
+package com.newhan.userservice.dto;
 
 public record JwtResponseDTO(
     String token,   // <--- Ensure 'token' is FIRST

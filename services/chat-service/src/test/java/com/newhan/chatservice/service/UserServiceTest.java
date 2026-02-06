@@ -3,7 +3,6 @@ package com.newhan.chatservice.service; // Adjust to match your folder structure
 import com.newhan.chatservice.dto.userdtos.UserLoginDTO;
 import com.newhan.chatservice.dto.userdtos.UserRegistrationDTO;
 import com.newhan.chatservice.dto.userdtos.UserResponseDTO;
-import com.newhan.chatservice.dto.JwtResponseDTO; // Import this!
 import com.newhan.chatservice.model.user.User;
 import com.newhan.chatservice.repository.UserRepository;
 import org.bson.types.ObjectId;
@@ -42,7 +41,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setUserId(new ObjectId());
+        testUser.setId(new ObjectId());
         testUser.setUserName("testuser");
         testUser.setPassword("encodedPassword");
         testUser.setFirstName("Test");

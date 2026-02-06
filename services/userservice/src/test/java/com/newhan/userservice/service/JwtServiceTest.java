@@ -1,7 +1,7 @@
-package com.newhan.chatservice.service;
+package com.newhan.userservice.service;
 
-import com.newhan.chatservice.model.user.User;
-import org.bson.types.ObjectId;
+import com.newhan.userservice.model.User;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,11 +28,11 @@ class JwtServiceTest {
     void generateToken_ReturnsValidToken() {
         // Arrange
         User user = new User();
-        user.setUserId(new ObjectId());
-        user.setUserName("testuser");
+        user.setId(new String());
+        user.setUsername("testuser");
 
         // Act
-        String token = jwtService.generateToken(user);
+        String token = jwtService.generateToken(user.getUsername(), user.getId());
 
         // Assert
         assertNotNull(token);
