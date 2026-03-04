@@ -3,6 +3,7 @@ package com.newhanchat.v1.ui.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Chat
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
@@ -23,6 +24,12 @@ fun BottomNavBar(currentRoute: String, onNavigate: (String) -> Unit) {
             label = { Text("Chats") },
             selected = currentRoute == "user_list",
             onClick = { if (currentRoute != "user_list") onNavigate("user_list") }
+        )
+        NavigationBarItem(
+            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+            label = { Text("Profile") },
+            selected = currentRoute == "profile",
+            onClick = { if (currentRoute != "profile") onNavigate("profile") }
         )
     }
 }

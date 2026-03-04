@@ -65,6 +65,8 @@ dependencies {
     implementation(libs.converter.gson)
     implementation(libs.converter.scalars)
 
+    implementation(libs.androidx.datastore.preferences)
+
     // Images & Icons
     implementation(libs.coil.compose)
     implementation(libs.material.icons.extended)

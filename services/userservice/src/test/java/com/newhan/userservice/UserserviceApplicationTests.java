@@ -6,7 +6,6 @@ import com.newhan.userservice.model.User;
 import com.newhan.userservice.repository.UserRepository;
 import com.newhan.userservice.service.JwtService;
 import com.newhan.userservice.service.UserService;
-import com.newhan.userservice.dto.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

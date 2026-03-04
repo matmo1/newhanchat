@@ -3,6 +3,7 @@ package com.newhanchat.v1.data.api
 import com.newhanchat.v1.data.model.AuthRequest
 import com.newhanchat.v1.data.model.ChatMessageDTO
 import com.newhanchat.v1.data.model.JwtResponse
+import com.newhanchat.v1.data.model.PagedResponse
 import com.newhanchat.v1.data.model.PostRequest
 import com.newhanchat.v1.data.model.PostResponse
 import com.newhanchat.v1.data.model.RegisterRequest
@@ -31,6 +32,9 @@ interface ApiService {
     @POST("/api/users/register")
     suspend fun register(@Body request: RegisterRequest): Response<Void>
 
+    @GET("/api/users/{id}")
+    suspend fun getUserProfile(@Path("id") userId: String): Response<UserResponse>
+
     @GET("/api/users")
     suspend fun getUsers(): Response<List<UserResponse>>
 
@@ -48,7 +52,10 @@ interface ApiService {
     ): Response<UserResponse>
 
     @GET("/api/posts")
-    suspend fun getAllPosts(): Response<List<PostResponse>>
+    suspend fun getAllPosts(
+        @Query("page") page: Int = 0,
+        @Query("size") size: Int = 20
+    ): Response<PagedResponse<PostResponse>>
 
     // --- STEP 1: Upload the file ---
     @Multipart

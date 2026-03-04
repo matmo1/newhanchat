@@ -1,5 +1,6 @@
 package com.newhan.chatservice.service;
 
+import com.newhan.chatservice.dto.userdtos.UserUpdateEvent;
 import com.newhan.chatservice.model.user.StatusType;
 import com.newhan.chatservice.model.user.User;
 import com.newhan.chatservice.repository.UserRepository;
@@ -36,5 +37,15 @@ public class UserService {
 
     public List<User> findConnectedUsers() {
         return userRepository.findAllByStatus_Type(StatusType.ONLINE);
+    }
+
+    public void updateProfileFromEvent(UserUpdateEvent event) {
+        userRepository.findByNickName(event.username()).ifPresent(user -> {
+            // Only update the display fields, ignore status
+            user.setFullName(event.fullName());
+            user.setProfilePictureUrl(event.profilePictureUrl());
+            
+            userRepository.save(user);
+        });
     }
 }

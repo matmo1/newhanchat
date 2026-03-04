@@ -2,6 +2,11 @@ package com.newhan.postservice.service;
 
 import com.newhan.postservice.model.Post;
 import com.newhan.postservice.repository.PostRepository;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,8 +26,10 @@ public class PostService {
         return postRepository.save(post);
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    public Page<Post> getAllPosts(int page, int limit) {
+        // Sort by newest first
+        Pageable pageable = PageRequest.of(page, limit, Sort.by(Sort.Direction.DESC, "createdAt"));
+        return postRepository.findAll(pageable);
     }
 
     public List<Post> getUserPosts(String userId) {

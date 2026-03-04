@@ -4,13 +4,13 @@ import com.newhan.postservice.model.Post;
 import com.newhan.postservice.service.FileStorageService;
 import com.newhan.postservice.service.PostService;
 
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/posts")
@@ -53,13 +53,12 @@ public class PostController {
     }
 
     @GetMapping
-    public List<Post> getAllPosts() {
-        return postService.getAllPosts();
-    }
-
-    @GetMapping("/user/{userId}")
-    public List<Post> getUserPosts(@PathVariable String userId) {
-        return postService.getUserPosts(userId);
+    public ResponseEntity<Page<Post>> getAllPosts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int limit // Renamed to 'limit' per your request
+    ) {
+        // Controller just passes the raw numbers to the Service
+        return ResponseEntity.ok(postService.getAllPosts(page, limit));
     }
 
     @DeleteMapping("/{id}")

@@ -3,6 +3,7 @@ package com.newhanchat.v1.ui.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -16,15 +17,17 @@ import androidx.navigation.compose.rememberNavController
 import com.newhanchat.v1.data.api.ChatManager
 import com.newhanchat.v1.data.api.TokenManager
 import com.newhanchat.v1.data.api.apiService
+import com.newhanchat.v1.data.repository.AuthPreferences
 import com.newhanchat.v1.data.repository.PostRepository
 import com.newhanchat.v1.ui.screens.LoginScreen
 import com.newhanchat.v1.ui.screens.PostListScreen
+import com.newhanchat.v1.ui.screens.ProfileScreen
 import com.newhanchat.v1.ui.screens.RegisterScreen
 import com.newhanchat.v1.ui.screens.UserListScreen
 import com.newhanchat.v1.ui.viewmodel.PostViewModel
 
 @Composable
-fun AppNavigation() {
+fun AppNavigation(authPreferences: AuthPreferences) {
     val navController = rememberNavController()
     // Chat Manager singleton
     val chatManager = remember { ChatManager() }
@@ -34,17 +37,26 @@ fun AppNavigation() {
     // Simple state to hold current user ID across screens
     var currentUserId by remember { androidx.compose.runtime.mutableStateOf("") }
 
-    NavHost(navController = navController, startDestination = "login") {
+    // 1. Read device cache
+    val cachedToken by authPreferences.authToken.collectAsState(initial = null)
+    val cachedUserId by authPreferences.userId.collectAsState(initial = null)
+
+    // 2. Decide Start Destination dynamically
+    val startDestination = if (cachedToken != null) {
+        TokenManager.token = cachedToken // Ensure interceptor gets it
+        "post_list"
+    } else {
+        "login"
+    }
+
+    NavHost(navController = navController, startDestination = startDestination) {
 
         // 1. LOGIN
         composable("login") {
             LoginScreen(
-                onLoginSuccess = { token, userId, _ ->
-                    TokenManager.token = token
-                    currentUserId = userId
-                    chatManager.connect(token)
+                onLoginSuccess = {
                     navController.navigate("post_list") {
-                        popUpTo("login") { inclusive = true } // Clear back stack
+                        popUpTo("login") { inclusive = true }
                     }
                 },
                 onNavigateToRegister = { navController.navigate("register") }
@@ -113,6 +125,16 @@ fun AppNavigation() {
                     )
                 }
             }
+        }
+        composable("profile") {
+            ProfileScreen(
+                onLogout = {
+                    TokenManager.token = null
+                    navController.navigate("login") {
+                        popUpTo(0) { inclusive = true } // Clear entire backstack on logout
+                    }
+                }
+            )
         }
     }
 }

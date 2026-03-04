@@ -5,5 +5,6 @@ data class UserResponse(
     val username: String,
     val fname: String,
     val lname: String,
-    val userStatus: UserStatus?
+    val userStatus: UserStatus?,
+    val profilePictureUrl: String?
 )
