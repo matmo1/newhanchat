@@ -2,6 +2,10 @@ package com.newhan.userservice.model;
 
 import java.time.LocalDateTime;
 
+import jakarta.persistence.Embeddable;
+
+
+@Embeddable
 public class UserStatus {
     private StatusType type = StatusType.OFFLINE;
     

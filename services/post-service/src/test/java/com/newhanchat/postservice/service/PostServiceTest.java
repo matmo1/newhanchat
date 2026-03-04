@@ -10,6 +10,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -53,10 +54,10 @@ class PostServiceTest {
     @Test
     void getAllPosts_Success() {
         // Arrange
-        when(postRepository.findAll()).thenReturn(List.of(testPost));
-
+        when(postRepository.findAll(PageRequest.of(1, 20, Sort.by("createdAt").descending())))
+            .thenReturn(postPage);
         // Act
-        List<Post> result = postService.getAllPosts();
+        List<Post> result = postService.getAllPosts(1, 20).getContent();
 
         // Assert
         assertFalse(result.isEmpty());

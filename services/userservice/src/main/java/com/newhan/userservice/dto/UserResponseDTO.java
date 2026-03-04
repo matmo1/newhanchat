@@ -10,5 +10,7 @@ public record UserResponseDTO(
     String username,
     String fname,
     String lname,
-    UserStatus userStatus 
+    UserStatus userStatus,
+    String bio,
+    String profilePictureUrl
 ) {}

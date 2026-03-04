@@ -24,7 +24,8 @@ public class User {
     private String bio;
     private String profilePictureUrl;
     
-    private LocalDateTime lastSeen;
+    @Embedded // Embeds UserStatus fields into the user table
+    private UserStatus status = new UserStatus();
 
     // --- Standard Getters and Setters (No Lombok) ---
 
@@ -55,6 +56,16 @@ public class User {
     public String getProfilePictureUrl() { return profilePictureUrl; }
     public void setProfilePictureUrl(String profilePictureUrl) { this.profilePictureUrl = profilePictureUrl; }
 
-    public LocalDateTime getLastSeen() { return lastSeen; }
-    public void setLastSeen(LocalDateTime lastSeen) { this.lastSeen = lastSeen; }
+    public UserStatus getStatus() { return status; }
+    public void setStatus(UserStatus status) { this.status = status; }
+
+    // Delegation methods to fix UserService and UserController mismatches
+    public LocalDateTime getLastSeen() {
+        return status != null ? status.getLastSeen() : null;
+    }
+
+    public void setLastSeen(LocalDateTime lastSeen) {
+        if (this.status == null) this.status = new UserStatus();
+        this.status.setLastSeen(lastSeen);
+    }
 }

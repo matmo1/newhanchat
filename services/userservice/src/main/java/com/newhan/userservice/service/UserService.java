@@ -2,10 +2,15 @@ package com.newhan.userservice.service;
 
 import com.newhan.userservice.dto.UserLoginDTO;
 import com.newhan.userservice.dto.UserRegistrationDTO;
+import com.newhan.userservice.dto.UserUpdateEvent;
 import com.newhan.userservice.model.User;
 import com.newhan.userservice.repository.UserRepository;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -16,11 +21,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final KafkaProducerService kafkaProducerService;
+    private final ProfilePicStorageService picStorageService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
+    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, KafkaProducerService kafkaProducerService, ProfilePicStorageService picStorageService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
+        this.kafkaProducerService = kafkaProducerService;
+        this.picStorageService = picStorageService;
     }
 
     public void register(UserRegistrationDTO dto) {
@@ -65,5 +74,36 @@ public class UserService {
 
     public List<User> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    public User updateBio(String userId, String newBio) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        
+        user.setBio(newBio);
+        return userRepository.save(user);
+    }
+
+    public User updateProfilePicture(String userId, MultipartFile file, HttpServletRequest request) {
+        // 1. Fetch the user first to ensure they exist before doing expensive file IO
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 2. Save physical file to disk
+        String fileName = picStorageService.storeFile(file);
+
+        // 3. Dynamically build the URL based on the request origin
+        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
+        String fileUrl = baseUrl + "/api/users/media/" + fileName;
+
+        // 4. Update database
+        user.setProfilePictureUrl(fileUrl);
+        User savedUser = userRepository.save(user);
+
+        // 5. Notify Chat Service via Kafka
+        String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
+        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(savedUser.getUsername(), fullName, fileUrl));
+
+        return savedUser;
     }
 }

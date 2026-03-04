@@ -16,7 +16,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             NewHanChatDemoTheme {
                 // The entire app logic is now handled by Navigation
-                AppNavigation()
+                AppNavigation(
+                    authPreferences = TODO()
+                )
             }
         }
     }
