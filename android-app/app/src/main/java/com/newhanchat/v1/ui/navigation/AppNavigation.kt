@@ -52,9 +52,17 @@ fun AppNavigation(authPreferences: AuthPreferences) {
     NavHost(navController = navController, startDestination = startDestination) {
 
         // 1. LOGIN
+        // 1. LOGIN
         composable("login") {
             LoginScreen(
-                onLoginSuccess = {
+                // 🚀 Add the three expected String parameters here:
+                onLoginSuccess = { token, userId, username ->
+
+                    // Update your global state with the new user's info!
+                    currentUserId = userId
+                    TokenManager.token = token
+
+                    // Now navigate to the post feed
                     navController.navigate("post_list") {
                         popUpTo("login") { inclusive = true }
                     }
@@ -62,7 +70,6 @@ fun AppNavigation(authPreferences: AuthPreferences) {
                 onNavigateToRegister = { navController.navigate("register") }
             )
         }
-
         // 2. REGISTER
         composable("register") {
             RegisterScreen(

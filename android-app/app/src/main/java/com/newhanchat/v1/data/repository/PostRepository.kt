@@ -1,6 +1,7 @@
 package com.newhanchat.v1.data.repository
 
 import com.newhanchat.v1.data.api.ApiService
+import com.newhanchat.v1.data.model.PagedResponse
 import com.newhanchat.v1.data.model.PostResponse
 import com.newhanchat.v1.data.model.PostRequest
 import com.newhanchat.v1.data.model.UserResponse
@@ -9,8 +10,17 @@ import retrofit2.Response
 
 class PostRepository(private val apiService: ApiService) {
 
-    suspend fun getPosts(): Result<List<PostResponse>> {
-        return safeApiCall { apiService.getAllPosts() }
+    suspend fun getPosts(page: Int, size: Int): Result<PagedResponse<PostResponse>> {
+        return try {
+            val response = apiService.getPosts(page, size)
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body()!!)
+            } else {
+                Result.failure(Exception("API Error"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 
     suspend fun createPost(content: String, imageUrl: String?): Result<PostResponse> {

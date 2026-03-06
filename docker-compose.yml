@@ -52,6 +52,7 @@ services:
       POSTGRES_DB: newhan_posts
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
 
   # ------------------------------------
   # MICROSERVICES
@@ -81,14 +82,33 @@ services:
       - kafka
     volumes:
       # Map a local folder 'uploads' to the container's '/app/uploads'
-      - ./uploads:/app/uploads
+      - ./posts:/app/uploads/posts
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/newhan_posts
       - SPRING_DATASOURCE_USERNAME=admin
       - SPRING_DATASOURCE_PASSWORD=admin123
       - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
       # Tell the app where to save files
-      - FILE_UPLOAD_DIR=/app/uploads
+      - FILE_UPLOAD_DIR=/app/uploads/posts
+
+  user-service:
+    build: ./services/userservice
+    container_name: user-service
+    ports:
+      - "8083:8083"
+    depends_on:
+      - postgres
+      - kafka
+
+    volumes:
+      - ./users:/app/uploads/users
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/newhan_users
+      - SPRING_DATASOURCE_USERNAME=admin
+      - SPRING_DATASOURCE_PASSWORD=admin123
+      - SPRING_KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - SERVER_PORT=8083
+      - FILE_UPLOAD_DIR=/app/uploads/users
 
   # 3. API Gateway (The Entry Point)
   api-gateway:
@@ -99,6 +119,7 @@ services:
     depends_on:
       - chat-service
       - post-service
+      - user-service
     environment:
       - SERVER_PORT=8082
 

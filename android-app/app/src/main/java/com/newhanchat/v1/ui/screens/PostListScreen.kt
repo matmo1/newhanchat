@@ -10,7 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed // 🚀 Changed to itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
@@ -63,7 +63,8 @@ fun PostListScreen(
             }
         }
     ) { padding ->
-        if (isLoading) {
+        // 🚀 UPDATED CONDITION: Only show the massive spinner if we are loading the very FIRST page
+        if (isLoading && posts.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
@@ -73,7 +74,8 @@ fun PostListScreen(
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                items(posts) { post ->
+                // 🚀 CHANGED: items to itemsIndexed
+                itemsIndexed(posts) { index, post ->
                     val name = userMap[post.authorId] ?: "Unknown"
                     PostCard(
                         post = post,
@@ -82,6 +84,14 @@ fun PostListScreen(
                         onDelete = { viewModel.deletePost(post.id) },
                         onImageClick = { url -> zoomedImageUrl = url }
                     )
+
+                    // 🚀 PAGINATION TRIGGER 🚀
+                    // Triggers the next load when scrolling near the bottom
+                    LaunchedEffect(index) {
+                        if (index >= posts.size - 2) {
+                            viewModel.loadMorePosts()
+                        }
+                    }
                 }
             }
         }

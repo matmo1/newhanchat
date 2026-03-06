@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @Service
@@ -41,8 +43,14 @@ public class UserService {
         user.setFirstName(dto.fname());
         user.setLastName(dto.lname());
         user.setPassword(passwordEncoder.encode(dto.password()));
-        // Handle Date parsing carefully in production
-        user.setDateOfBirth(LocalDateTime.parse(dto.dOfBirth().toString())); 
+        
+        // Handle Date parsing carefully
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+            user.setDateOfBirth(LocalDateTime.parse(dto.dOfBirth().toString(), formatter));
+        } catch (DateTimeParseException e) {
+            throw new RuntimeException("Invalid date format. Expected yyyy-MM-dd'T'HH:mm:ss");
+        }
         
         userRepository.save(user);
     }
@@ -63,6 +71,11 @@ public class UserService {
 
     public User getProfile(String userId) {
         return userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    public User getUserByUsername(String username) {
+        return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
     

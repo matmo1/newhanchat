@@ -52,7 +52,7 @@ interface ApiService {
     ): Response<UserResponse>
 
     @GET("/api/posts")
-    suspend fun getAllPosts(
+    suspend fun getPosts(
         @Query("page") page: Int = 0,
         @Query("size") size: Int = 20
     ): Response<PagedResponse<PostResponse>>
