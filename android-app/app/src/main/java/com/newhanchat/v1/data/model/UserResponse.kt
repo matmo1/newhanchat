@@ -5,6 +5,7 @@ data class UserResponse(
     val username: String,
     val fname: String,
     val lname: String,
-    val userStatus: UserStatus?,
+    val userStatus: UserStatus?, // Make sure you have a UserStatus data class!
+    val bio: String?,            // ✨ Added the bio (nullable in case they haven't set one)
     val profilePictureUrl: String?
 )

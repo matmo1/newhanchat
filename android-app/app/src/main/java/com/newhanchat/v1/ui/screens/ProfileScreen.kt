@@ -2,54 +2,97 @@ package com.newhanchat.v1.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import coil3.compose.AsyncImage // <-- Coil 3 Import
+import coil3.compose.AsyncImage
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
-    onLogout: () -> Unit,
-    viewModel: ProfileViewModel = hiltViewModel() // Fetches data immediately on tab click
+    viewModel: ProfileViewModel,
+    onNavigateToSettings: () -> Unit
 ) {
     val profile by viewModel.profile.collectAsState()
-
-    Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        if (profile == null) {
-            CircularProgressIndicator(modifier = Modifier.padding(top = 50.dp))
-        } else {
-            // Profile Picture using Coil 3
-            AsyncImage(
-                model = profile?.profilePictureUrl ?: "https://via.placeholder.com/150",
-                contentDescription = "Profile Picture",
-                modifier = Modifier.size(120.dp).clip(CircleShape)
+    val isLoading by viewModel.isLoading.collectAsState()
+    val error by viewModel.error.collectAsState()
+    // ✨ NEW: Wrap the screen in a Scaffold to easily add a TopAppBar
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Profile") },
+                actions = {
+                    // ✨ Cleaned up! Just a simple button now.
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "Settings")
+                    }
+                }
             )
-            Spacer(modifier = Modifier.height(16.dp))
+        }
+    ) { paddingValues ->
+        // The main content area. Notice we apply the paddingValues from the Scaffold!
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues),
+            contentAlignment = Alignment.Center
+        ) {
+            if (isLoading) {
+                CircularProgressIndicator()
+            } else if (error != null) {
+                Text(text = error!!, color = MaterialTheme.colorScheme.error)
+            } else if (profile != null) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp)
+                ) {
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            // User Info
-            Text("Name: ${profile?.fname} ${profile?.lname}", style = MaterialTheme.typography.titleLarge)
-            Text("Username: @${profile?.username}", style = MaterialTheme.typography.bodyLarge)
+                    AsyncImage(
+                        model = profile!!.profilePictureUrl,
+                        contentDescription = "Profile Picture",
+                        modifier = Modifier
+                            .size(150.dp)
+                            .clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
 
-            // If you have status in the response:
-            Text("Status: ${profile?.userStatus}", style = MaterialTheme.typography.bodyMedium)
+                    Spacer(modifier = Modifier.height(24.dp))
 
-            Spacer(modifier = Modifier.weight(1f))
+                    Text(
+                        text = "${profile!!.fname} ${profile!!.lname}",
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                    Text(
+                        text = "@${profile!!.username}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
 
-            // Logout Button
-            Button(
-                onClick = { viewModel.logout { onLogout() } },
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Logout")
+                    Spacer(modifier = Modifier.height(32.dp))
+
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Text(
+                            text = profile!!.bio ?: "No bio provided yet.",
+                            modifier = Modifier.padding(16.dp),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
+                }
             }
         }
     }

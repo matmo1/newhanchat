@@ -1,3 +1,5 @@
+import java.util.Properties // Fixes the "Unresolved reference: util" error
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
@@ -9,6 +11,13 @@ android {
     namespace = "com.newhanchat.v1"
     compileSdk = 36
 
+    // Load local.properties once at the top level
+    val localProperties = Properties()
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(localPropertiesFile.inputStream())
+    }
+
     defaultConfig {
         applicationId = "com.newhanchat.demo"
         minSdk = 24
@@ -17,6 +26,20 @@ android {
         versionName = "0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.96:8082\"")
+        buildConfigField("String", "WS_BASE_URL", "\"ws://192.168.1.96:8082/ws-chat\"")
+    }
+
+    // Implementing Product Flavors for environment management
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            // Uses the IP from local.properties, defaulting to your local IP (not the emulator)
+            val apiBase = localProperties.getProperty("API_BASE_URL") ?: "\"http://192.168.1.96:8082\""
+            buildConfigField("String", "API_BASE_URL", apiBase)
+        }
     }
 
     buildTypes {
@@ -41,6 +64,7 @@ android {
     }
 
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
@@ -51,26 +75,26 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
 
-    // Compose with BOM (Bill of Materials)
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
 
-    // Networking: Retrofit & Converters
+    // Networking
     implementation(libs.retrofit)
     implementation(libs.okhttp)
     implementation(libs.converter.gson)
     implementation(libs.converter.scalars)
-
     implementation(libs.androidx.datastore.preferences)
 
     // Images & Icons
     implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
     implementation(libs.material.icons.extended)
 
-    // WebSockets & Reactive Programming (RxJava 3)
+    // WebSockets & Reactive Programming
     implementation(libs.rxjava2)
     implementation(libs.stomp.android)
     implementation(libs.rxjava3)
@@ -79,6 +103,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.navigation.compose)
 
+    // Dependency Injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.androidx.hilt.navigation.compose)

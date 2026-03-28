@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -52,24 +51,23 @@ public class ChatMessageService {
      * Verifies that the requester is the original sender.
      */
     public ChatMessageDTO editMessage(EditedMessageDTO dto, String requesterId) {
-        Optional<ChatMessage> optionalMsg = repository.findById(dto.messageId());
+        // We use orElseThrow to handle the "Not Found" case cleanly
+        ChatMessage msg = repository.findById(dto.messageId())
+                .orElseThrow(() -> new RuntimeException("Message not found"));
 
-        if (optionalMsg.isPresent()) {
-            ChatMessage msg = optionalMsg.get();
-
-            // SECURITY: Only allow the original sender to edit
-            if (msg.getSenderId().equals(requesterId)) {
-                msg.setContent(dto.newContent());
-                
-                // If you add 'edited' fields to your Entity later, update them here:
-                // msg.setEdited(true);
-                // msg.setLastEdited(new Date());
-
-                ChatMessage updated = repository.save(msg);
-                return mapToDTO(updated);
-            }
+        // SECURITY: Only allow the original sender to edit
+        if (!msg.getSenderId().equals(requesterId)) {
+            // Throwing an exception is better than returning null!
+            throw new RuntimeException("Unauthorized: You can only edit your own messages.");
         }
-        return null; // Or throw custom exception "Message not found or Unauthorized"
+
+        // Apply the updates
+        msg.setContent(dto.newContent());
+        msg.setEdited(true);             // Now using our new entity field!
+        msg.setLastEdited(new Date());   // Now using our new entity field!
+
+        ChatMessage updated = repository.save(msg);
+        return mapToDTO(updated);
     }
 
     /**
@@ -95,8 +93,8 @@ public class ChatMessageService {
                 msg.getContent(),
                 convertToLocalDateTime(msg.getTimestamp()),
                 msg.getStatus(),
-                false, // Todo: Add 'boolean edited' to your Mongo Entity to support this
-                null   // Todo: Add 'Date lastEdited' to your Mongo Entity to support this
+                msg.isEdited(),                              // No longer hardcoded to false!
+                convertToLocalDateTime(msg.getLastEdited())
         );
     }
 

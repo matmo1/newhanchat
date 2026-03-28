@@ -1,5 +1,6 @@
 package com.newhanchat.v1.di
 
+import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.api.ApiService
 import com.newhanchat.v1.data.api.AuthInterceptor
 import com.newhanchat.v1.data.repository.AuthRepository
@@ -30,7 +31,7 @@ object AppModule {
             .build()
 
         return Retrofit.Builder()
-            .baseUrl("http://192.168.1.89:8082") // CHECK YOUR IP
+            .baseUrl(BuildConfig.API_BASE_URL) // CHECK YOUR IP
             .client(client)
             .addConverterFactory(ScalarsConverterFactory.create())
             .addConverterFactory(GsonConverterFactory.create())

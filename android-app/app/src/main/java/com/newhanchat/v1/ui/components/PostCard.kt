@@ -21,10 +21,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
 import coil3.request.crossfade
+import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.api.TokenManager
 import com.newhanchat.v1.data.model.PostResponse
-
-private const val SERVER_BASE_URL = "http://192.168.1.89:8082"
 
 @Composable
 fun PostCard(
@@ -76,7 +75,7 @@ fun PostCard(
                 val baseUrl = if (post.imageUrl.startsWith("http")) {
                     post.imageUrl
                 } else {
-                    "$SERVER_BASE_URL${post.imageUrl}"
+                    "${BuildConfig.API_BASE_URL}${post.imageUrl}"
                 }
 
                 val fullUrlWithToken = "$baseUrl?token=${TokenManager.token}"

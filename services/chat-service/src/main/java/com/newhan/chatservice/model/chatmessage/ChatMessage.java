@@ -23,6 +23,9 @@ public class ChatMessage {
     private String recipientId;
     private String content;
     private Date timestamp;
+
+    private boolean isEdited;
+    private Date lastEdited;
     
     private MessageSatus status; // SENT, DELIVERED, READ
 }

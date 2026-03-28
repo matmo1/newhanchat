@@ -25,8 +25,9 @@ fun BottomNavBar(currentRoute: String, onNavigate: (String) -> Unit) {
             selected = currentRoute == "user_list",
             onClick = { if (currentRoute != "user_list") onNavigate("user_list") }
         )
+        // Fixed: Now uses the same clean pattern as the others!
         NavigationBarItem(
-            icon = { Icon(Icons.Default.Person, contentDescription = "Profile") },
+            icon = { Icon(Icons.Filled.Person, contentDescription = "Profile") },
             label = { Text("Profile") },
             selected = currentRoute == "profile",
             onClick = { if (currentRoute != "profile") onNavigate("profile") }

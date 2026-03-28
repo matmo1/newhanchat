@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
@@ -25,6 +26,12 @@ import com.newhanchat.v1.ui.screens.ProfileScreen
 import com.newhanchat.v1.ui.screens.RegisterScreen
 import com.newhanchat.v1.ui.screens.UserListScreen
 import com.newhanchat.v1.ui.viewmodel.PostViewModel
+import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
+import com.newhanchat.v1.ui.components.BottomNavBar
+import com.newhanchat.v1.ui.screens.EditBioScreen
+import com.newhanchat.v1.ui.screens.EditNameScreen
+import com.newhanchat.v1.ui.screens.EditProfileScreen
+import com.newhanchat.v1.ui.screens.SettingsScreen
 
 @Composable
 fun AppNavigation(authPreferences: AuthPreferences) {
@@ -134,13 +141,79 @@ fun AppNavigation(authPreferences: AuthPreferences) {
             }
         }
         composable("profile") {
-            ProfileScreen(
-                onLogout = {
-                    TokenManager.token = null
-                    navController.navigate("login") {
-                        popUpTo(0) { inclusive = true } // Clear entire backstack on logout
-                    }
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+
+            Scaffold(
+                bottomBar = {
+                    BottomNavBar(
+                        currentRoute = "profile",
+                        onNavigate = { route ->
+                            navController.navigate(route) {
+                                popUpTo(navController.graph.startDestinationId) { saveState = true }
+                                launchSingleTop = true
+                                restoreState = true
+                            }
+                        }
+                    )
                 }
+            ) { padding ->
+                // 🛠️ FIX: Only applying bottom padding so the top bar sits flush
+                androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.padding(bottom = padding.calculateBottomPadding())
+                ) {
+                    ProfileScreen(
+                        viewModel = profileViewModel,
+                        onNavigateToSettings = { navController.navigate("settings") }
+                    )
+                }
+            }
+        }
+
+        // --- ✨ ADD THESE NEW SCREENS RIGHT BELOW THE PROFILE COMPOSABLE ---
+
+        composable("settings") {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                onEditProfile = { navController.navigate("edit_profile") },
+                onLogout = {
+                    profileViewModel.logout(onLogoutComplete = {
+                        chatManager.disconnect()
+                        navController.navigate("login") {
+                            popUpTo(0) // Clear the backstack completely
+                        }
+                    })
+                }
+            )
+        }
+
+        composable("edit_profile") {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+
+            EditProfileScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToEditBio = { navController.navigate("edit_bio") },
+                onNavigateToEditName = { navController.navigate("edit_name") }
+            )
+        }
+
+        composable("edit_bio") {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+
+            EditBioScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable("edit_name") {
+            val profileViewModel: ProfileViewModel = hiltViewModel()
+
+            EditNameScreen(
+                viewModel = profileViewModel,
+                onBack = { navController.popBackStack() }
             )
         }
     }

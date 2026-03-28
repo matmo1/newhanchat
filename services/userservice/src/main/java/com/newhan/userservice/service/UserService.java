@@ -2,6 +2,7 @@ package com.newhan.userservice.service;
 
 import com.newhan.userservice.dto.UserLoginDTO;
 import com.newhan.userservice.dto.UserRegistrationDTO;
+import com.newhan.userservice.dto.UserResponseDTO;
 import com.newhan.userservice.dto.UserUpdateEvent;
 import com.newhan.userservice.model.User;
 import com.newhan.userservice.repository.UserRepository;
@@ -44,12 +45,23 @@ public class UserService {
         user.setLastName(dto.lname());
         user.setPassword(passwordEncoder.encode(dto.password()));
         
-        // Handle Date parsing carefully
+        // Generate a nice default profile picture using their initials!
+        String defaultAvatarUrl = "https://ui-avatars.com/api/?name=" + dto.fname() + "+" + dto.lname() + "&background=random";
+        user.setProfilePictureUrl(defaultAvatarUrl);
+        
+        // Handle Date parsing carefully and flexibly
         try {
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            user.setDateOfBirth(LocalDateTime.parse(dto.dOfBirth().toString(), formatter));
+            if (dto.dOfBirth() != null) {
+                String dobString = dto.dOfBirth().toString();
+                // If the frontend sends "1995-10-25" without the time, this will safely append the time so ISO parsing doesn't crash!
+                if (!dobString.contains("T")) {
+                    dobString += "T00:00:00"; 
+                }
+                DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+                user.setDateOfBirth(LocalDateTime.parse(dobString, formatter));
+            }
         } catch (DateTimeParseException e) {
-            throw new RuntimeException("Invalid date format. Expected yyyy-MM-dd'T'HH:mm:ss");
+            throw new RuntimeException("Invalid date format. Expected yyyy-MM-dd'T'HH:mm:ss", e);
         }
         
         userRepository.save(user);
@@ -69,6 +81,8 @@ public class UserService {
         return jwtService.generateToken(user.getUsername(), user.getId());
     }
 
+    // --- Internal Methods returning raw User entity ---
+    
     public User getProfile(String userId) {
         return userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -79,7 +93,6 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found"));
     }
     
-    // Helper to get ID by Username
     public User getProfileByUsername(String username) {
          return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User not found"));
@@ -89,18 +102,29 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public User updateBio(String userId, String newBio) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        user.setBio(newBio);
-        return userRepository.save(user);
+    // --- Endpoint Methods returning secure UserResponseDTO ---
+
+    public UserResponseDTO getProfileDTO(String userId) {
+        User user = getProfile(userId);
+        return mapToDTO(user);
     }
 
-    public User updateProfilePicture(String userId, MultipartFile file, HttpServletRequest request) {
-        // 1. Fetch the user first to ensure they exist before doing expensive file IO
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+    public List<UserResponseDTO> getAllUsersDTO() {
+        return userRepository.findAll().stream()
+                .map(this::mapToDTO)
+                .toList();
+    }
+
+    public UserResponseDTO updateBio(String userId, String newBio) {
+        User user = getProfile(userId);
+        user.setBio(newBio);
+        User savedUser = userRepository.save(user);
+        return mapToDTO(savedUser);
+    }
+
+    public UserResponseDTO updateProfilePicture(String userId, MultipartFile file, HttpServletRequest request) {
+        // 1. Fetch the user first to ensure they exist
+        User user = getProfile(userId);
 
         // 2. Save physical file to disk
         String fileName = picStorageService.storeFile(file);
@@ -117,6 +141,28 @@ public class UserService {
         String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
         kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(savedUser.getUsername(), fullName, fileUrl));
 
-        return savedUser;
+        return mapToDTO(savedUser);
+    }
+
+    public UserResponseDTO updateName(String userId, String fname, String lname) {
+        User user = getProfile(userId);
+        user.setFirstName(fname);
+        user.setLastName(lname);
+        User savedUser = userRepository.save(user);
+
+        // Notify Chat Service via Kafka so their new name shows up in chats immediately
+        String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
+        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(savedUser.getUsername(), fullName, savedUser.getProfilePictureUrl()));
+
+        return mapToDTO(savedUser);
+    }
+
+    // --- Helper DTO Mapper ---
+    
+    private UserResponseDTO mapToDTO(User user) {
+        return new UserResponseDTO(
+            user.getId(), user.getUsername(), user.getFirstName(), 
+            user.getLastName(), user.getStatus(), user.getBio(), user.getProfilePictureUrl()
+        );
     }
 }

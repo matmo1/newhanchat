@@ -62,7 +62,7 @@ fun ChatScreen(
                 messages.add(0, newMessage)
             } else if (isFromMeToRecipient) {
                 // Find pending message (id is null) and replace it
-                val pendingIndex = messages.indexOfFirst { it.senderId == myUserId && it.id == null }
+                val pendingIndex = messages.indexOfLast { it.senderId == myUserId && it.id == null }
                 if (pendingIndex != -1) {
                     messages[pendingIndex] = newMessage
                 } else {

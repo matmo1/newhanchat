@@ -2,6 +2,7 @@ package com.newhanchat.v1.data.api
 
 import android.util.Log
 import com.google.gson.Gson
+import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.model.ChatMessage
 import com.newhanchat.v1.data.model.ChatMessageDTO
 import com.newhanchat.v1.data.model.EditedMessage
@@ -40,7 +41,7 @@ class ChatManager {
         }
 
         // Stomp.over requires okhttp3.OkHttpClient in the classpath
-        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, "ws://192.168.1.89:8082/ws-chat")
+        stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, BuildConfig.WS_BASE_URL)
         stompClient?.withClientHeartbeat(10000)?.withServerHeartbeat(10000)
 
         val headers = listOf(StompHeader("Authorization", "Bearer $jwtToken"))

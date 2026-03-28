@@ -24,16 +24,16 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
     private val _error = MutableStateFlow<String?>(null)
     val error = _error.asStateFlow()
 
-    // 🚀 NEW: Pagination Trackers
+    // Pagination Trackers
     private var currentPage = 0
     private var isLastPage = false
-    private var isFetchingPosts = false // Separated so we don't trigger the full-screen spinner on pagination
+    private var isFetchingPosts = false
 
     init {
         loadInitialData()
     }
 
-    // 🚀 UPDATED: Resets the page count and loads the very first batch
+    // Resets the page count and loads the very first batch
     fun loadInitialData() {
         currentPage = 0
         isLastPage = false
@@ -57,7 +57,7 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         }
     }
 
-    // 🚀 NEW: Fetches pages chunks as the user scrolls
+    // Fetches pages chunks as the user scrolls
     fun loadMorePosts() {
         // Prevent duplicate network calls or loading past the end
         if (isFetchingPosts || isLastPage) return
@@ -65,7 +65,6 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
         viewModelScope.launch {
             isFetchingPosts = true
 
-            // Note: Make sure your repository.getPosts now returns a Result<PagedResponse<PostResponse>>
             val postResult = repository.getPosts(currentPage, 10)
 
             postResult.onSuccess { pagedData ->
@@ -105,8 +104,9 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
 
             // 2. Create Post
             val postResult = repository.createPost(content, uploadedUrl)
-            postResult.onSuccess {
-                loadInitialData() // Refresh list completely starting from page 0
+            postResult.onSuccess { newPost ->
+                // ✨ FIX: Prepend the newly created post locally without wiping the feed!
+                _posts.value = listOf(newPost) + _posts.value
                 onSuccess()
             }
             postResult.onFailure { _error.value = "Post Failed: ${it.message}" }
@@ -118,7 +118,11 @@ class PostViewModel(private val repository: PostRepository) : ViewModel() {
     fun deletePost(postId: Long) {
         viewModelScope.launch {
             repository.deletePost(postId).onSuccess {
-                loadInitialData() // Refresh list completely starting from page 0
+                // ✨ FIX: Remove the post locally without wiping the feed!
+                _posts.value = _posts.value.filter { it.id != postId }
+            }
+            repository.deletePost(postId).onFailure {
+                _error.value = "Failed to delete post: ${it.message}"
             }
         }
     }

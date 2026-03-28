@@ -2,7 +2,6 @@ package com.newhan.userservice.controller;
 
 import com.newhan.userservice.dto.*;
 import com.newhan.userservice.model.User;
-import com.newhan.userservice.service.ProfilePicStorageService;
 import com.newhan.userservice.service.UserService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,11 +18,9 @@ import java.util.List;
 public class UserController {
 
     private final UserService userService;
-    private final ProfilePicStorageService picStorageService;
 
-    public UserController(UserService userService, ProfilePicStorageService picStorageService) {
+    public UserController(UserService userService) {
         this.userService = userService;
-        this.picStorageService = picStorageService;
     }
 
     @PostMapping("/register")
@@ -41,13 +38,15 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUser(@PathVariable String id) {
-        return ResponseEntity.ok(userService.getProfile(id));
+    public ResponseEntity<UserResponseDTO> getUser(@PathVariable String id) {
+        // Pure delegation to the service layer
+        return ResponseEntity.ok(userService.getProfileDTO(id));
     }
     
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers() {
-        return ResponseEntity.ok(userService.getAllUsers());
+    public ResponseEntity<List<UserResponseDTO>> getAllUsers() {
+        // Pure delegation to the service layer
+        return ResponseEntity.ok(userService.getAllUsersDTO());
     }
 
     @PostMapping(value = "/{id}/profile-picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -56,16 +55,22 @@ public class UserController {
             @RequestParam("file") MultipartFile file,
             HttpServletRequest request) {
         
-        // Pure delegation. The service handles the heavy lifting.
-        User updatedUser = userService.updateProfilePicture(id, file, request);
-        
-        return ResponseEntity.ok(mapToDTO(updatedUser));
+        // Pure delegation to the service layer
+        return ResponseEntity.ok(userService.updateProfilePicture(id, file, request));
     }
 
-    private UserResponseDTO mapToDTO(User user) {
-        return new UserResponseDTO(
-            user.getId(), user.getUsername(), user.getFirstName(), 
-            user.getLastName(), user.getStatus(), user.getBio(), user.getProfilePictureUrl()
-        );
+    @PatchMapping("/{id}/bio")
+    public ResponseEntity<UserResponseDTO> updateBio(@PathVariable String id, @RequestBody String newBio) {
+        // Pure delegation to the service layer
+        return ResponseEntity.ok(userService.updateBio(id, newBio));
     }
+
+    @PatchMapping("/{id}/name")
+    public ResponseEntity<UserResponseDTO> updateName(
+            @PathVariable String id, 
+            @RequestParam String fname, 
+            @RequestParam String lname) {
+        
+        // Pure delegation to the service layer
+        return ResponseEntity.ok(userService.updateName(id, fname, lname));
 }
