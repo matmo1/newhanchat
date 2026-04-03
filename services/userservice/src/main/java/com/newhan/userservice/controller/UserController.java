@@ -73,4 +73,5 @@ public class UserController {
         
         // Pure delegation to the service layer
         return ResponseEntity.ok(userService.updateName(id, fname, lname));
+        }
 }

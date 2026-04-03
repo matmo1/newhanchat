@@ -2,7 +2,7 @@
 
 **Newhanchat** is a robust, real-time messaging backend built with Spring Boot and MongoDB. Currently functioning as a secure chat service, this project serves as the foundation for a future full-scale social media platform.
 
-It is designed to be self-hosted and will soon power a native Kotlin mobile application.
+It is designed to be self-hosted and powers a native Kotlin mobile application.
 
 ## 🚀 Features
 
@@ -13,53 +13,31 @@ It is designed to be self-hosted and will soon power a native Kotlin mobile appl
 * **Editing**: Support for editing messages after they are sent.
 * **User Presence**: Real-time user status updates (Online, Offline, Away, Busy).
 
-## 🛠️ Tech Stack
+## 🛠 Tech Stack
 
-* **Language**: Java 21
-* **Framework**: Spring Boot 3.5.7
-* **Database**: MongoDB
-* **Security**: Spring Security, JWT
-* **Real-time**: WebSocket, STOMP
-* **Containerization**: Docker & Docker Compose
+* **Language**: Java 21.
+* **Framework**: Spring Boot 3.5.7.
+* **Database**: MongoDB.
+* **Security**: Spring Security, JWT.
+* **Real-time**: WebSocket, STOMP.
+* **Containerization**: Docker & Docker Compose.
+* **Mobile**: Native Android (Kotlin, Jetpack Compose).
 
-## 📦 Getting Started
+## 💻 System Requirements
+
+* **Recommended RAM**: **16GB** is recommended to run the backend services and compile the Android app at the same time.
+* **Workflow Tip**: If you have less RAM, you can first compile the Android app and then start the backend.
+
+## 🏃 Getting Started
 
 ### Prerequisites
-* Docker & Docker Compose
-* Java 21 SDK (if running locally without Docker)
+* **Docker & Docker Compose** (for the backend).
+* **Android Studio** (for the mobile app).
+* **Java 21 SDK** (if running locally without Docker).
 
-### Running with Docker (Recommended)
-
-1.  **Clone the repository**:
-    ```bash
-    git clone <your-repo-url>
-    cd newhanchat
-    ```
-
-2.  **Start the services**:
-    This will spin up both the backend and the MongoDB database.
-    ```bash
-    docker-compose up --build
-    ```
-
-The API will be available at `http://localhost:8080`.
-
-## 🔌 API Endpoints
-
-### Authentication
-* `POST /api/users/register` - Register a new user
-* `POST /api/users/login` - Login and receive JWT token
-
-### Chat & History
-* `GET /api/messagages/history?senderId=...&recipientId=...` - Fetch chat history
-* **WebSocket Endpoint**: `/ws-chat`
-    * **Subscribe**: `/user/queue/messages` (Private messages)
-    * **Subscribe**: `/user/queue/notifications` (Delivery updates)
-    * **Send Destination**: `/app/chat`
-
-## 🔮 Roadmap
-
-* [x] Core Messaging Backend
-* [ ] **Mobile App**: Native Android application built with Kotlin (In Progress).
-* [ ] **Social Features**: Feed, user profiles, and media sharing.
-* [ ] **Encryption**: End-to-End encryption for private chats.
+### 1. Backend Setup (Docker)
+The backend can be started via Docker Compose:
+```bash
+git clone <your-repo-url>
+cd newhanchat
+docker-compose up --build
