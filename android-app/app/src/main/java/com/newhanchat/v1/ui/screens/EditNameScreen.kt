@@ -17,8 +17,10 @@ fun EditNameScreen(
     onBack: () -> Unit
 ) {
     val currentProfile by viewModel.profile.collectAsState()
-    var fname by remember { mutableStateOf(currentProfile?.fname ?: "") }
-    var lname by remember { mutableStateOf(currentProfile?.lname ?: "") }
+
+    // FIXED: Added remember keys so the text fields populate when the network loads!
+    var fname by remember(currentProfile?.fname) { mutableStateOf(currentProfile?.fname ?: "") }
+    var lname by remember(currentProfile?.lname) { mutableStateOf(currentProfile?.lname ?: "") }
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(

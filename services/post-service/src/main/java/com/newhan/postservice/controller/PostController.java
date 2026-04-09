@@ -10,6 +10,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 
 @RestController
@@ -44,8 +47,11 @@ public class PostController {
     ) {
         String userId = authentication.getName();
         
+        // ✨ FIXED: Passed in the exact order the Service expects them!
         Post createdPost = postService.createPost(
             userId, 
+            request.getAuthorName(), 
+            request.getAuthorProfilePic(), 
             request.getContent(), 
             request.getImageUrl()
         );
@@ -55,10 +61,10 @@ public class PostController {
     @GetMapping
     public ResponseEntity<Page<Post>> getAllPosts(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int limit // Renamed to 'limit' per your request
+            @RequestParam(defaultValue = "20") int size
     ) {
         // Controller just passes the raw numbers to the Service
-        return ResponseEntity.ok(postService.getAllPosts(page, limit));
+        return ResponseEntity.ok(postService.getAllPosts(page, size));
     }
 
     @DeleteMapping("/{id}")
@@ -73,10 +79,16 @@ public class PostController {
     public static class PostRequest {
         private String content;
         private String imageUrl;
+        private String authorName;       // ✨ NEW
+        private String authorProfilePic; // ✨ NEW
         
         public String getContent() { return content; }
         public void setContent(String content) { this.content = content; }
         public String getImageUrl() { return imageUrl; }
         public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+        public String getAuthorName() { return authorName; }
+        public void setAuthorName(String authorName) { this.authorName = authorName; }
+        public String getAuthorProfilePic() { return authorProfilePic; }
+        public void setAuthorProfilePic(String authorProfilePic) { this.authorProfilePic = authorProfilePic; }
     }
 }

@@ -3,6 +3,7 @@ package com.newhanchat.v1.di
 import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.api.ApiService
 import com.newhanchat.v1.data.api.AuthInterceptor
+import com.newhanchat.v1.data.api.ChatManager
 import com.newhanchat.v1.data.repository.AuthRepository
 import com.newhanchat.v1.data.repository.PostRepository
 import dagger.Module
@@ -51,4 +52,12 @@ object AppModule {
     fun providePostRepository(apiService: ApiService): PostRepository {
         return PostRepository(apiService)
     }
+
+    @Provides
+    @Singleton
+    fun provideChatManager(): ChatManager {
+        return ChatManager()
+    }
+
+
 }

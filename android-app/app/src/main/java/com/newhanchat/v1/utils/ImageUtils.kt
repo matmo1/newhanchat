@@ -4,6 +4,9 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import java.io.File
 import java.io.FileOutputStream
 
@@ -49,5 +52,18 @@ object ImageUtils {
             e.printStackTrace()
             null
         }
+    }
+
+    fun createMultipartBodyPartFromUri(context: android.content.Context, uri: Uri, paramName: String): MultipartBody.Part? {
+        val contentResolver = context.contentResolver
+        val inputStream = contentResolver.openInputStream(uri) ?: return null
+        val tempFile = java.io.File.createTempFile("upload", ".jpg", context.cacheDir)
+        tempFile.outputStream().use { out -> inputStream.copyTo(out) }
+
+        // FIXED: Using modern OkHttp extension functions instead of deprecated Java methods
+        val mediaType = "image/*".toMediaTypeOrNull()
+        val requestFile = tempFile.asRequestBody(mediaType)
+
+        return MultipartBody.Part.createFormData(paramName, tempFile.name, requestFile)
     }
 }

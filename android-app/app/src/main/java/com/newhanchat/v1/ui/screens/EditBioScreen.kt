@@ -16,9 +16,10 @@ fun EditBioScreen(
     viewModel: ProfileViewModel,
     onBack: () -> Unit
 ) {
-    // Grab the current bio to pre-fill the text field
     val currentProfile by viewModel.profile.collectAsState()
-    var bioText by remember { mutableStateOf(currentProfile?.bio ?: "") }
+
+    // FIXED: Added 'currentProfile?.bio' inside remember() so it updates when network loads!
+    var bioText by remember(currentProfile?.bio) { mutableStateOf(currentProfile?.bio ?: "") }
 
     val isLoading by viewModel.isLoading.collectAsState()
 
@@ -32,12 +33,11 @@ fun EditBioScreen(
                     }
                 },
                 actions = {
-                    // Save Button in the Top Bar
                     IconButton(
                         onClick = {
                             viewModel.updateBio(newBio = bioText, onSuccess = onBack)
                         },
-                        enabled = !isLoading // Disable clicking if it's currently saving
+                        enabled = !isLoading
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)

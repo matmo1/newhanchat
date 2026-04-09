@@ -23,8 +23,20 @@ class PostRepository(private val apiService: ApiService) {
         }
     }
 
-    suspend fun createPost(content: String, imageUrl: String?): Result<PostResponse> {
-        return safeApiCall { apiService.createPost(PostRequest(content, imageUrl)) }
+    suspend fun createPost(
+        content: String,
+        imageUrl: String,
+        authorName: String,
+        authorProfilePic: String
+    ): Response<PostResponse> {
+        // ✨ FIXED: Pass all 4 variables into the PostRequest
+        val request = PostRequest(
+            content = content,
+            imageUrl = imageUrl,
+            authorName = authorName,
+            authorProfilePic = authorProfilePic
+        )
+        return apiService.createPost(request)
     }
 
     suspend fun uploadImage(file: MultipartBody.Part): Result<String> {

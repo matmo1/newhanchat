@@ -8,15 +8,17 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.List;
 
 @Controller
-public class UserController {
+@RequestMapping("/api/chat")
+public class UserControllerChatS {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
+    public UserControllerChatS(UserService userService) {
         this.userService = userService;
     }
 
@@ -38,7 +40,7 @@ public class UserController {
 
     // --- REST Endpoint (For initial list loading) ---
     
-    @GetMapping("/users")
+    @GetMapping("/connected-users")
     public ResponseEntity<List<User>> findConnectedUsers() {
         return ResponseEntity.ok(userService.findConnectedUsers());
     }

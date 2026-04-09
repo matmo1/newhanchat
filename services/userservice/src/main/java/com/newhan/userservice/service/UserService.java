@@ -9,6 +9,7 @@ import com.newhan.userservice.repository.UserRepository;
 
 import jakarta.servlet.http.HttpServletRequest;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,6 +27,9 @@ public class UserService {
     private final JwtService jwtService;
     private final KafkaProducerService kafkaProducerService;
     private final ProfilePicStorageService picStorageService;
+
+    @Value("${app.api-base-url:http://192.168.1.96:8082}")
+    private String apiBaseUrl;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, KafkaProducerService kafkaProducerService, ProfilePicStorageService picStorageService) {
         this.userRepository = userRepository;
@@ -130,8 +134,7 @@ public class UserService {
         String fileName = picStorageService.storeFile(file);
 
         // 3. Dynamically build the URL based on the request origin
-        String baseUrl = request.getScheme() + "://" + request.getServerName() + ":" + request.getServerPort();
-        String fileUrl = baseUrl + "/api/users/media/" + fileName;
+        String fileUrl = apiBaseUrl + "/api/users/media/" + fileName;
 
         // 4. Update database
         user.setProfilePictureUrl(fileUrl);

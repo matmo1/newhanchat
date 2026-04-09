@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -20,9 +21,15 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
-    public Post createPost(String userId, String content, String imageUrl) {
-        // Create the object here (Business Logic)
-        Post post = new Post(userId, content, imageUrl);
+    public Post createPost(String userId, String authorName, String authorProfilePic, String content, String imageUrl) {
+        Post post = new Post();
+        post.setUserId(userId);
+        post.setAuthorName(authorName);
+        post.setAuthorProfilePic(authorProfilePic);
+        post.setContent(content);
+        post.setImageUrl(imageUrl);
+        post.setCreatedAt(LocalDateTime.now());
+        
         return postRepository.save(post);
     }
 

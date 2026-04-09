@@ -23,13 +23,12 @@ fun ProfileScreen(
     val profile by viewModel.profile.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
-    // ✨ NEW: Wrap the screen in a Scaffold to easily add a TopAppBar
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Profile") },
                 actions = {
-                    // ✨ Cleaned up! Just a simple button now.
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(Icons.Default.MoreVert, contentDescription = "Settings")
                     }
@@ -37,26 +36,31 @@ fun ProfileScreen(
             )
         }
     ) { paddingValues ->
-        // The main content area. Notice we apply the paddingValues from the Scaffold!
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(paddingValues),
-            contentAlignment = Alignment.Center
+                .padding(paddingValues)
         ) {
             if (isLoading) {
-                CircularProgressIndicator()
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (error != null) {
-                Text(text = error!!, color = MaterialTheme.colorScheme.error)
+                Column(
+                    modifier = Modifier.align(Alignment.Center),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(text = error ?: "Unknown Error", color = MaterialTheme.colorScheme.error)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(onClick = { viewModel.loadProfile() }) {
+                        Text("Retry")
+                    }
+                }
             } else if (profile != null) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(24.dp)
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Spacer(modifier = Modifier.height(24.dp))
-
                     AsyncImage(
                         model = profile!!.profilePictureUrl,
                         contentDescription = "Profile Picture",
@@ -86,8 +90,11 @@ fun ProfileScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         )
                     ) {
+                        // FIXED: Checks if the bio is blank!
+                        val displayBio = profile!!.bio.takeIf { !it.isNullOrBlank() } ?: "No bio provided yet."
+
                         Text(
-                            text = profile!!.bio ?: "No bio provided yet.",
+                            text = displayBio,
                             modifier = Modifier.padding(16.dp),
                             style = MaterialTheme.typography.bodyLarge
                         )

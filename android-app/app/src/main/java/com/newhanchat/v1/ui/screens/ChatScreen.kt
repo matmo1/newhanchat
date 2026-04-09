@@ -24,7 +24,7 @@ import com.newhanchat.v1.data.model.UserResponse
 fun ChatScreen(
     chatManager: ChatManager,
     myUserId: String,
-    recipient: UserResponse,
+    recipientId: String,
     onBack: () -> Unit
 ) {
     var messageText by remember { mutableStateOf("") }
@@ -38,9 +38,9 @@ fun ChatScreen(
     var editContent by remember { mutableStateOf("") }
 
     // 1. Fetch History
-    LaunchedEffect(recipient.id) {
+    LaunchedEffect(recipientId) {
         try {
-            val response = apiService.getHistory(senderId = myUserId, recipientId = recipient.id)
+            val response = apiService.getHistory(senderId = myUserId, recipientId = recipientId)
             if (response.isSuccessful && response.body() != null) {
                 messages.clear()
                 // REVERSE history so newest is at index 0 (Bottom)
@@ -54,8 +54,8 @@ fun ChatScreen(
     // 2. Listen for Incoming
     LaunchedEffect(Unit) {
         chatManager.incomingMessages.collect { newMessage ->
-            val isFromRecipient = newMessage.senderId == recipient.id
-            val isFromMeToRecipient = newMessage.senderId == myUserId && newMessage.recipientId == recipient.id
+            val isFromRecipient = newMessage.senderId == recipientId
+            val isFromMeToRecipient = newMessage.senderId == myUserId && newMessage.recipientId == recipientId
 
             if (isFromRecipient) {
                 // Add to bottom (Index 0)
@@ -99,7 +99,7 @@ fun ChatScreen(
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Chat with ${recipient.fname}", style = MaterialTheme.typography.titleMedium)
+            Text("Chat with", style = MaterialTheme.typography.titleMedium)
         }
 
         HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
@@ -152,14 +152,14 @@ fun ChatScreen(
             Button(onClick = {
                 if (messageText.isNotBlank()) {
                     // Send to Websocket
-                    chatManager.sendMessage(ChatMessage(content = messageText, recipientId = recipient.id))
+                    chatManager.sendMessage(ChatMessage(content = messageText, recipientId = recipientId))
 
                     // Add optimistic local message (id = null)
                     messages.add(0, ChatMessageDTO(
                         id = null,
                         content = messageText,
                         senderId = myUserId,
-                        recipientId = recipient.id,
+                        recipientId = recipientId,
                         timestamp = null
                     ))
                     messageText = ""

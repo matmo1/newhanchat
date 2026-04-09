@@ -9,7 +9,8 @@ data class PostResponse(
 
     // FIXED: Backend sends "userId", mapping it to authorId
     @SerializedName("userId")
-    val authorId: String,
-
+    val userId: String,
+    val authorName: String?,       // ✨ NEW (Nullable just in case old posts don't have it)
+    val authorProfilePic: String?,
     val createdAt: String
 )

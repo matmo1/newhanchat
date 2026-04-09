@@ -7,14 +7,14 @@ import com.newhanchat.v1.data.model.ChatMessage
 import com.newhanchat.v1.data.model.ChatMessageDTO
 import com.newhanchat.v1.data.model.EditedMessage
 import com.newhanchat.v1.data.model.MessageUpdate
-import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.disposables.Disposable
-import io.reactivex.schedulers.Schedulers as SchedulersRx2
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.disposables.Disposable
+import io.reactivex.schedulers.Schedulers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import java.util.ArrayDeque
 import ua.naiksoftware.stomp.Stomp
+import java.util.concurrent.ConcurrentLinkedQueue
 import ua.naiksoftware.stomp.StompClient
 import ua.naiksoftware.stomp.dto.LifecycleEvent
 import ua.naiksoftware.stomp.dto.StompHeader
@@ -23,8 +23,8 @@ class ChatManager {
     private var stompClient: StompClient? = null
     private var compositeDisposable = CompositeDisposable()
     private var isConnected = false
-    private val pendingMessages = ArrayDeque<String>()
 
+    private val pendingMessages = ConcurrentLinkedQueue<String>()
     private val _incomingMessages = MutableSharedFlow<ChatMessageDTO>(
         replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST
     )
@@ -36,9 +36,8 @@ class ChatManager {
     val messageUpdates = _messageUpdates.asSharedFlow()
 
     fun connect(jwtToken: String) {
-        if (compositeDisposable.isDisposed) {
-            compositeDisposable = CompositeDisposable()
-        }
+        compositeDisposable.dispose()
+        compositeDisposable = CompositeDisposable()
 
         // Stomp.over requires okhttp3.OkHttpClient in the classpath
         stompClient = Stomp.over(Stomp.ConnectionProvider.OKHTTP, BuildConfig.WS_BASE_URL)
@@ -48,7 +47,7 @@ class ChatManager {
         stompClient?.connect(headers)
 
         val lifecycleSubscription = stompClient?.lifecycle()
-            ?.subscribeOn(SchedulersRx2.io())
+            ?.subscribeOn(Schedulers.io())
             ?.subscribe({ lifecycleEvent ->
                 when (lifecycleEvent.type) {
                     LifecycleEvent.Type.OPENED -> {
@@ -72,7 +71,7 @@ class ChatManager {
 
         // Subscription for Chat Messages
         val topicSubscription = stompClient?.topic("/user/queue/messages")
-            ?.subscribeOn(SchedulersRx2.io())
+            ?.subscribeOn(Schedulers.io())
             ?.subscribe({ topicMessage ->
                 try {
                     val receivedMessage = Gson().fromJson(topicMessage.payload, ChatMessageDTO::class.java)
@@ -86,7 +85,7 @@ class ChatManager {
 
         // Subscription for Message Updates (Edits)
         val editSubscription = stompClient?.topic("/user/queue/message-updates")
-            ?.subscribeOn(SchedulersRx2.io())
+            ?.subscribeOn(Schedulers.io())
             ?.subscribe({ topicMessage ->
                 try {
                     val update = Gson().fromJson(topicMessage.payload, MessageUpdate::class.java)
@@ -110,7 +109,7 @@ class ChatManager {
 
     private fun internalSendMessage(jsonMessage: String) {
         val sendSub = stompClient?.send("/app/chat", jsonMessage)
-            ?.subscribeOn(SchedulersRx2.io())
+            ?.subscribeOn(Schedulers.io())
             ?.subscribe({
                 Log.d("ChatManager", "Message sent")
             }, {
@@ -122,7 +121,7 @@ class ChatManager {
     fun editMessage(messageId: String, newContent: String) {
         val payload = Gson().toJson(EditedMessage(messageId, newContent))
         val editSub = stompClient?.send("/app/edit", payload)
-            ?.subscribeOn(SchedulersRx2.io())
+            ?.subscribeOn(Schedulers.io())
             ?.subscribe({
                 Log.d("ChatManager", "Edit request sent")
             }, {
