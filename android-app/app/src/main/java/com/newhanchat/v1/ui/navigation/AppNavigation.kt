@@ -1,8 +1,10 @@
 package com.newhanchat.v1.ui.navigation
 
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavType
@@ -15,27 +17,35 @@ import com.newhanchat.v1.data.api.ChatManager
 import com.newhanchat.v1.data.api.TokenManager
 import com.newhanchat.v1.data.repository.AuthPreferences
 import com.newhanchat.v1.ui.components.BottomNavBar
-
 import com.newhanchat.v1.ui.screens.*
 import com.newhanchat.v1.ui.viewmodel.*
+import kotlinx.coroutines.launch
 
 @Composable
 fun AppNavigation(
     authPreferences: AuthPreferences,
-    chatManager: ChatManager // Passed in from MainActivity so we can observe connection state globally
+    chatManager: ChatManager
 ) {
     val navController = rememberNavController()
-
-    // Simple state to hold current user ID across screens
     var currentUserId by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
 
+    // ✨ THE SUPERPOWER: Reactive Auto-Login & Auto-Logout
     LaunchedEffect(Unit) {
         authPreferences.authToken.collect { token ->
             TokenManager.token = token
             if (!token.isNullOrEmpty()) {
                 chatManager.connect(token)
+                // We have a token! Auto-route to Feed and erase the back button history
+                navController.navigate("post_list") {
+                    popUpTo(0)
+                }
             } else {
                 chatManager.disconnect()
+                // No token! Auto-route to Login and erase the back button history
+                navController.navigate("login") {
+                    popUpTo(0)
+                }
             }
         }
     }
@@ -46,14 +56,12 @@ fun AppNavigation(
         }
     }
 
-    // --- NAVIGATION BAR STATE TRACKING ---
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route?.substringBefore("/")
 
     val mainTabs = listOf("post_list", "user_list", "profile")
     val showBottomBar = currentRoute in mainTabs
 
-    // --- GLOBAL SCAFFOLD (Fixes the "Trapped" Bug) ---
     Scaffold(
         bottomBar = {
             if (showBottomBar) {
@@ -61,7 +69,6 @@ fun AppNavigation(
                     currentRoute = currentRoute ?: "",
                     onNavigate = { route ->
                         navController.navigate(route) {
-                            // This pops the stack so tabs don't pile up on top of each other!
                             popUpTo(navController.graph.startDestinationId) { saveState = true }
                             launchSingleTop = true
                             restoreState = true
@@ -73,20 +80,24 @@ fun AppNavigation(
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = "login",
-            modifier = Modifier.padding(innerPadding) // Prevents content from hiding behind the bar
+            startDestination = "splash", // ✨ START AT SPLASH INSTEAD OF LOGIN
+            modifier = Modifier.padding(innerPadding)
         ) {
 
+            // ✨ NEW: Temporary loading screen while DataStore fetches the token from disk
+            composable("splash") {
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator()
+                }
+            }
+
             composable("login") {
-                // Notice how clean this is with Hilt!
                 val viewModel: LoginViewModel = hiltViewModel()
                 LoginScreen(
                     viewModel = viewModel,
-                    onLoginSuccess = { _, _, _ ->
-                        navController.navigate("post_list") {
-                            popUpTo("login") { inclusive = true }
-                        }
-                    },
+                    // We don't even need manual navigation here anymore!
+                    // When the ViewModel saves the token, the LaunchedEffect above will auto-teleport us!
+                    onLoginSuccess = { _, _, _ -> },
                     onNavigateToRegister = { navController.navigate("register") }
                 )
             }
@@ -118,15 +129,14 @@ fun AppNavigation(
             }
 
             composable("user_list") {
-                // We don't need to pass token here since we removed it from UserListScreen's parameters
                 UserListScreen(
                     currentUserId = currentUserId ?: "",
-                    onUserSelected = { selectedUser -> // FIXED: Renamed to match your file
+                    onUserSelected = { selectedUser ->
                         navController.navigate("chat/${selectedUser.id}")
                     },
-                    onLogout = { // FIXED: Added missing onLogout parameter
-                        chatManager.disconnect()
-                        navController.navigate("login") { popUpTo(0) }
+                    onLogout = {
+                        // Just clear the cache! The LaunchedEffect will handle kicking us out.
+                        scope.launch { authPreferences.clearCredentials() }
                     }
                 )
             }
@@ -136,9 +146,8 @@ fun AppNavigation(
                 arguments = listOf(navArgument("recipientId") { type = NavType.StringType })
             ) { backStackEntry ->
                 val recipientId = backStackEntry.arguments?.getString("recipientId") ?: return@composable
-                // We let ChatScreen handle injecting its own ChatViewModel now!
                 ChatScreen(
-                    chatManager = chatManager, // FIXED: Pass the global chatManager!
+                    chatManager = chatManager,
                     myUserId = currentUserId ?: "",
                     recipientId = recipientId,
                     onBack = { navController.popBackStack() }
@@ -159,12 +168,8 @@ fun AppNavigation(
                     onBack = { navController.popBackStack() },
                     onEditProfile = { navController.navigate("edit_profile") },
                     onLogout = {
-                        profileViewModel.logout(onLogoutComplete = {
-                            chatManager.disconnect()
-                            navController.navigate("login") {
-                                popUpTo(0)
-                            }
-                        })
+                        // Just clear the cache! The LaunchedEffect will handle kicking us out.
+                        scope.launch { authPreferences.clearCredentials() }
                     }
                 )
             }
