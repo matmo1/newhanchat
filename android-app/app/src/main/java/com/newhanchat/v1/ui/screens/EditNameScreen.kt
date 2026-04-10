@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 
@@ -17,8 +18,6 @@ fun EditNameScreen(
     onBack: () -> Unit
 ) {
     val currentProfile by viewModel.profile.collectAsState()
-
-    // FIXED: Added remember keys so the text fields populate when the network loads!
     var fname by remember(currentProfile?.fname) { mutableStateOf(currentProfile?.fname ?: "") }
     var lname by remember(currentProfile?.lname) { mutableStateOf(currentProfile?.lname ?: "") }
     val isLoading by viewModel.isLoading.collectAsState()
@@ -40,13 +39,14 @@ fun EditNameScreen(
                         if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         else Icon(Icons.Default.Check, contentDescription = "Save")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        }
+        },
+        // ✨ FIXED: Made the Scaffold transparent so wallpaper shows through system bars
+        containerColor = Color.Transparent
     ) { paddingValues ->
-        Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)) {
             OutlinedTextField(
                 value = fname,
                 onValueChange = { fname = it },

@@ -7,6 +7,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 
@@ -17,10 +18,7 @@ fun EditBioScreen(
     onBack: () -> Unit
 ) {
     val currentProfile by viewModel.profile.collectAsState()
-
-    // FIXED: Added 'currentProfile?.bio' inside remember() so it updates when network loads!
     var bioText by remember(currentProfile?.bio) { mutableStateOf(currentProfile?.bio ?: "") }
-
     val isLoading by viewModel.isLoading.collectAsState()
 
     Scaffold(
@@ -34,9 +32,7 @@ fun EditBioScreen(
                 },
                 actions = {
                     IconButton(
-                        onClick = {
-                            viewModel.updateBio(newBio = bioText, onSuccess = onBack)
-                        },
+                        onClick = { viewModel.updateBio(newBio = bioText, onSuccess = onBack) },
                         enabled = !isLoading
                     ) {
                         if (isLoading) {
@@ -45,31 +41,27 @@ fun EditBioScreen(
                             Icon(Icons.Default.Check, contentDescription = "Save")
                         }
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        }
+        },
+        // ✨ FIXED: Made the Scaffold transparent so wallpaper shows through system bars
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)
         ) {
             OutlinedTextField(
                 value = bioText,
                 onValueChange = { bioText = it },
                 label = { Text("About You") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(150.dp),
+                modifier = Modifier.fillMaxWidth().height(150.dp),
                 maxLines = 5,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary
                 )
             )
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = "Write a little bit about yourself so others can get to know you.",
                 style = MaterialTheme.typography.bodySmall,

@@ -26,8 +26,10 @@ fun PostCard(post: PostResponse, currentUserId: String, onDelete: () -> Unit) {
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 8.dp),
         shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+        // ✨ FIXED: Elevation set to 0.dp to stop Material 3 from painting a solid white overlay!
+        elevation = CardDefaults.cardElevation(0.dp),
+        // Makes the card a beautifully translucent glass surface
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
@@ -59,7 +61,6 @@ fun PostCard(post: PostResponse, currentUserId: String, onDelete: () -> Unit) {
                     modifier = Modifier.weight(1f)
                 )
 
-                // Trash Can
                 if (post.userId == currentUserId) {
                     IconButton(onClick = onDelete) {
                         Icon(Icons.Default.Delete, contentDescription = "Delete Post", tint = MaterialTheme.colorScheme.error)

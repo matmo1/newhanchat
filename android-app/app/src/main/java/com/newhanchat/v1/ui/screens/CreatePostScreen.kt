@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -24,7 +25,6 @@ import com.newhanchat.v1.utils.ImageUtils.createMultipartBodyPartFromUri
 @Composable
 fun CreatePostScreen(
     viewModel: PostViewModel,
-    // ✨ NEW: We bring in the ProfileViewModel to grab your name and picture!
     profileViewModel: ProfileViewModel = hiltViewModel(),
     onBack: () -> Unit,
     onPostCreated: () -> Unit
@@ -34,8 +34,6 @@ fun CreatePostScreen(
     val context = LocalContext.current
 
     val isUploading by viewModel.isUploading.collectAsState()
-
-    // ✨ NEW: Collect the profile data
     val profile by profileViewModel.profile.collectAsState()
 
     val imagePicker = rememberLauncherForActivityResult(
@@ -60,8 +58,6 @@ fun CreatePostScreen(
                                 val imagePart = selectedImageUri?.let { uri ->
                                     createMultipartBodyPartFromUri(context, uri, "file")
                                 }
-
-                                // ✨ NEW: Format the name and pass it to the ViewModel
                                 val authorName = if (profile != null) "${profile!!.fname} ${profile!!.lname}" else "Unknown User"
                                 val authorPic = profile?.profilePictureUrl ?: ""
 
@@ -72,9 +68,13 @@ fun CreatePostScreen(
                     ) {
                         Text("Share")
                     }
-                }
+                },
+                // ✨ FIXED: Made the top bar transparent
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        }
+        },
+        // ✨ FIXED: Made the Scaffold transparent so wallpaper shows through system bars
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             Column(
@@ -108,7 +108,8 @@ fun CreatePostScreen(
                     Spacer(modifier = Modifier.height(16.dp))
                     Card(
                         shape = MaterialTheme.shapes.medium,
-                        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        elevation = CardDefaults.cardElevation(0.dp), // Keeps it glassy
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
                         AsyncImage(
                             model = selectedImageUri,

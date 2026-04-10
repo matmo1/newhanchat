@@ -9,6 +9,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.newhanchat.v1.ui.components.PostCard
@@ -32,16 +33,16 @@ fun PostListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Feed", style = MaterialTheme.typography.titleLarge) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreatePostClick, containerColor = MaterialTheme.colorScheme.primary) {
                 Icon(Icons.Default.Add, contentDescription = "Create Post")
             }
-        }
+        },
+        // ✨ FIXED: This stops the Scaffold from blocking the system bars!
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (isLoading) {

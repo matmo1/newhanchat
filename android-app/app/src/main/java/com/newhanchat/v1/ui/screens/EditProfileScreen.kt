@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import com.canhub.cropper.CropImageContract
 import com.canhub.cropper.CropImageContractOptions
@@ -28,17 +29,11 @@ fun EditProfileScreen(
 ) {
     val context = LocalContext.current
 
-    // ✨ NEW: The CanHub Image Cropper Launcher
     val cropImageLauncher = rememberLauncherForActivityResult(CropImageContract()) { result ->
-        if (result.isSuccessful) {
-            val croppedUri = result.uriContent
-            if (croppedUri != null) {
-                // Upload the perfectly cropped, lightweight image!
-                viewModel.uploadProfilePicture(context, croppedUri)
-                onBack()
-            }
+        if (result.isSuccessful && result.uriContent != null) {
+            viewModel.uploadProfilePicture(context, result.uriContent!!)
+            onBack()
         } else {
-            // Optional: Handle error (e.g., user closed the cropper without saving)
             result.error?.printStackTrace()
         }
     }
@@ -48,12 +43,13 @@ fun EditProfileScreen(
             TopAppBar(
                 title = { Text("Edit Profile") },
                 navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
+                    IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
             )
-        }
+        },
+        // ✨ FIXED: Made the Scaffold transparent so wallpaper shows through system bars
+        containerColor = Color.Transparent
     ) { paddingValues ->
         Column(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
 
@@ -61,36 +57,37 @@ fun EditProfileScreen(
                 headlineContent = { Text("Change Profile Picture") },
                 leadingContent = { Icon(Icons.Default.Image, contentDescription = null) },
                 modifier = Modifier.clickable {
-                    // ✨ Launch the Cropper!
-                    // uri = null means it will open the gallery for the user to pick an image first.
                     cropImageLauncher.launch(
                         CropImageContractOptions(
                             uri = null,
                             cropImageOptions = CropImageOptions(
-                                imageSourceIncludeCamera = true, // Lets them take a live photo too!
+                                imageSourceIncludeCamera = true,
                                 imageSourceIncludeGallery = true,
-                                cropShape = CropImageView.CropShape.OVAL, // Circular UI overlay
-                                fixAspectRatio = true, // Forces 1:1 square
+                                cropShape = CropImageView.CropShape.OVAL,
+                                fixAspectRatio = true,
                                 aspectRatioX = 1,
                                 aspectRatioY = 1
                             )
                         )
                     )
-                }
+                },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
             HorizontalDivider()
 
             ListItem(
                 headlineContent = { Text("Edit Bio") },
                 leadingContent = { Icon(Icons.Default.Notes, contentDescription = null) },
-                modifier = Modifier.clickable { onNavigateToEditBio() }
+                modifier = Modifier.clickable { onNavigateToEditBio() },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
             HorizontalDivider()
 
             ListItem(
                 headlineContent = { Text("Edit Name") },
                 leadingContent = { Icon(Icons.Default.Person, contentDescription = null) },
-                modifier = Modifier.clickable { onNavigateToEditName() }
+                modifier = Modifier.clickable { onNavigateToEditName() },
+                colors = ListItemDefaults.colors(containerColor = Color.Transparent)
             )
         }
     }
