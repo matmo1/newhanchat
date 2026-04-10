@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -19,7 +20,7 @@ import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.model.PostResponse
 
 @Composable
-fun PostCard(post: PostResponse) {
+fun PostCard(post: PostResponse, currentUserId: String, onDelete: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -29,14 +30,13 @@ fun PostCard(post: PostResponse) {
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
-
-            // Header: User Info
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-                // Show actual profile picture, or default icon if null
                 if (!post.authorProfilePic.isNullOrBlank()) {
+                    val pfpUrl = if (post.authorProfilePic.startsWith("http")) post.authorProfilePic
+                    else "${BuildConfig.API_BASE_URL}/api/users/media/${post.authorProfilePic}"
+
                     AsyncImage(
-                        model = post.authorProfilePic,
+                        model = pfpUrl,
                         contentDescription = "Profile Picture",
                         modifier = Modifier.size(40.dp).clip(CircleShape),
                         contentScale = ContentScale.Crop
@@ -52,41 +52,36 @@ fun PostCard(post: PostResponse) {
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                // Show actual name, fallback to User ID if old post
                 Text(
                     text = post.authorName ?: ("User " + post.userId.take(5) + "..."),
                     style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f)
                 )
+
+                // Trash Can
+                if (post.userId == currentUserId) {
+                    IconButton(onClick = onDelete) {
+                        Icon(Icons.Default.Delete, contentDescription = "Delete Post", tint = MaterialTheme.colorScheme.error)
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Post Content Text
             if (post.content.isNotBlank()) {
-                Text(
-                    text = post.content,
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text(text = post.content, style = MaterialTheme.typography.bodyLarge)
                 Spacer(modifier = Modifier.height(12.dp))
             }
 
-            // Post Image
             if (!post.imageUrl.isNullOrBlank()) {
-                // FIXED: Build the full URL dynamically using your BuildConfig!
-                val fullImageUrl = if (post.imageUrl.startsWith("http")) {
-                    post.imageUrl
-                } else {
-                    "${BuildConfig.API_BASE_URL}/api/posts/${post.imageUrl}"
-                }
+                val fullImageUrl = if (post.imageUrl.startsWith("http")) post.imageUrl
+                else "${BuildConfig.API_BASE_URL}/api/posts/${post.imageUrl}"
 
                 AsyncImage(
                     model = fullImageUrl,
                     contentDescription = "Post Image",
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 300.dp)
-                        .clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 300.dp).clip(RoundedCornerShape(8.dp)),
                     contentScale = ContentScale.Crop
                 )
             }

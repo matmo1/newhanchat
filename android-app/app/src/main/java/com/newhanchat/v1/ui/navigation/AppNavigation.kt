@@ -115,6 +115,7 @@ fun AppNavigation(
                 val viewModel: PostViewModel = hiltViewModel()
                 PostListScreen(
                     viewModel = viewModel,
+                    currentUserId = currentUserId ?: "", // ✨ Pass it here!
                     onCreatePostClick = { navController.navigate("create_post") }
                 )
             }
@@ -165,6 +166,7 @@ fun AppNavigation(
             composable("settings") {
                 val profileViewModel: ProfileViewModel = hiltViewModel()
                 SettingsScreen(
+                    viewModel = profileViewModel,
                     onBack = { navController.popBackStack() },
                     onEditProfile = { navController.navigate("edit_profile") },
                     onLogout = {

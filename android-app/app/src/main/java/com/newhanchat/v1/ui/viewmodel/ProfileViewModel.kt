@@ -159,4 +159,9 @@ class ProfileViewModel @Inject constructor(
             _isLoading.value = false
         }
     }
+    fun saveBackgroundUri(uri: android.net.Uri) {
+        viewModelScope.launch {
+            authPreferences.saveBackgroundUri(uri.toString())
+        }
+    }
 }

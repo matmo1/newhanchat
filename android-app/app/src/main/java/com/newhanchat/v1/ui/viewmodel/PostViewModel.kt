@@ -87,4 +87,17 @@ class PostViewModel @Inject constructor(
             }
         }
     }
+
+    fun deletePost(postId: Long) {
+        viewModelScope.launch {
+            try {
+                val response = apiService.deletePost(postId)
+                if (response.isSuccessful) {
+                    loadPosts() // Refresh the feed after deleting
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+    }
 }

@@ -18,12 +18,12 @@ import com.newhanchat.v1.ui.viewmodel.PostViewModel
 @Composable
 fun PostListScreen(
     viewModel: PostViewModel = hiltViewModel(),
-    onCreatePostClick: () -> Unit // Pass a navigation event here to go to a CreatePostScreen
+    currentUserId: String,
+    onCreatePostClick: () -> Unit
 ) {
     val posts by viewModel.posts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
-    // Load posts when the screen is shown
     LaunchedEffect(Unit) {
         viewModel.loadPosts()
     }
@@ -38,35 +38,27 @@ fun PostListScreen(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(
-                onClick = onCreatePostClick,
-                containerColor = MaterialTheme.colorScheme.primary
-            ) {
+            FloatingActionButton(onClick = onCreatePostClick, containerColor = MaterialTheme.colorScheme.primary) {
                 Icon(Icons.Default.Add, contentDescription = "Create Post")
             }
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
+        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (posts.isEmpty()) {
-                Text(
-                    text = "No posts yet. Be the first!",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.align(Alignment.Center)
-                )
+                Text("No posts yet. Be the first!", modifier = Modifier.align(Alignment.Center))
             } else {
                 LazyColumn(
-                    contentPadding = PaddingValues(bottom = 80.dp), // Leave space for Bottom Nav & FAB
+                    contentPadding = PaddingValues(bottom = 80.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     items(posts) { post ->
-                        PostCard(post = post)
+                        PostCard(
+                            post = post,
+                            currentUserId = currentUserId,
+                            onDelete = { viewModel.deletePost(post.id) }
+                        )
                     }
                 }
             }

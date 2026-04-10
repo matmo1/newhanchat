@@ -12,26 +12,27 @@ import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
 
-// Initialize DataStore
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "auth_prefs")
 
 @Singleton
 class AuthPreferences @Inject constructor(@ApplicationContext private val context: Context) {
 
-    // Define keys for the cache
     private val TOKEN_KEY = stringPreferencesKey("jwt_token")
     private val USER_ID_KEY = stringPreferencesKey("user_id")
 
-    // Expose cached data as reactive Flows
+    // ✨ NEW: Key for the custom background image
+    private val BACKGROUND_URI_KEY = stringPreferencesKey("background_uri")
+
     val authToken: Flow<String?> = context.dataStore.data.map { prefs -> prefs[TOKEN_KEY] }
     val userId: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_ID_KEY] }
 
-    // Inside your AuthPreferences.kt or AuthRepository.kt
+    // ✨ NEW: Flow to read the background URI
+    val backgroundUri: Flow<String?> = context.dataStore.data.map { prefs -> prefs[BACKGROUND_URI_KEY] }
+
     val userIdFlow: Flow<String?> = context.dataStore.data.map { preferences ->
-        preferences[USER_ID_KEY] // Returns the saved ID, or null if logged out
+        preferences[USER_ID_KEY]
     }
 
-    // Save to Cache
     suspend fun saveCredentials(token: String, userId: String) {
         context.dataStore.edit { prefs ->
             prefs[TOKEN_KEY] = token
@@ -39,8 +40,19 @@ class AuthPreferences @Inject constructor(@ApplicationContext private val contex
         }
     }
 
-    // Clear Cache (Logout)
+    // ✨ NEW: Save the custom background URI
+    suspend fun saveBackgroundUri(uri: String) {
+        context.dataStore.edit { prefs ->
+            prefs[BACKGROUND_URI_KEY] = uri
+        }
+    }
+
     suspend fun clearCredentials() {
-        context.dataStore.edit { prefs -> prefs.clear() }
+        context.dataStore.edit { prefs ->
+            prefs.remove(TOKEN_KEY)
+            prefs.remove(USER_ID_KEY)
+            // Note: We deliberately DO NOT remove the background URI here,
+            // so the app stays pretty even when logged out!
+        }
     }
 }
