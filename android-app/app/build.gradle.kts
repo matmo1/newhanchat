@@ -1,13 +1,21 @@
+import java.util.Properties // Fixes the "Unresolved reference: util" error
+
 plugins {
     alias(libs.plugins.android.application)
-    alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.google.dagger.hilt)
+    alias(libs.plugins.google.devtools.ksp)
 }
 
 android {
-    namespace = "com.newhanchat.demo"
-    compileSdk {
-        version = release(36)
+    namespace = "com.newhanchat.v1"
+    compileSdk = 36
+
+    // Load local.properties once at the top level
+    val localProperties = Properties()
+    val localPropertiesFile = project.rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(localPropertiesFile.inputStream())
     }
 
     defaultConfig {
@@ -18,6 +26,20 @@ android {
         versionName = "0.1"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.96:8082\"")
+        buildConfigField("String", "WS_BASE_URL", "\"ws://192.168.1.96:8082/ws-chat\"")
+    }
+
+    // Implementing Product Flavors for environment management
+    flavorDimensions += "environment"
+    productFlavors {
+        create("dev") {
+            dimension = "environment"
+            // Uses the IP from local.properties, defaulting to your local IP (not the emulator)
+            val apiBase = localProperties.getProperty("API_BASE_URL") ?: "\"http://192.168.1.96:8082\""
+            buildConfigField("String", "API_BASE_URL", apiBase)
+        }
     }
 
     buildTypes {
@@ -29,54 +51,70 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "11"
+
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        }
     }
+
     buildFeatures {
+        buildConfig = true
         compose = true
     }
 }
 
 dependencies {
+    // Core Android & Lifecycle
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
+
+    // Compose
     implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.compose.ui)
-    implementation(libs.androidx.compose.ui.graphics)
-    implementation(libs.androidx.compose.ui.tooling.preview)
-    implementation(libs.androidx.compose.material3)
-    implementation(libs.androidx.compose.foundation.layout)
+    implementation(libs.androidx.ui)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Networking
+    implementation(libs.retrofit)
+    implementation(libs.okhttp)
+    implementation(libs.converter.gson)
+    implementation(libs.converter.scalars)
+    implementation(libs.androidx.datastore.preferences)
+
+    // Images & Icons
+    implementation(libs.coil.compose)
+    implementation(libs.coil.network.okhttp)
+    implementation(libs.material.icons.extended)
+    implementation(libs.android.image.cropper)
+
+    // WebSockets & Reactive Programming
+    implementation(libs.rxjava2)
+    implementation(libs.stomp.android)
+    implementation(libs.rxjava3)
+    implementation(libs.rxandroid3)
+    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.navigation.compose)
+
+    // Dependency Injection
+    implementation(libs.hilt.android)
+    ksp(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.navigation.compose)
+
+    // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
-    debugImplementation(libs.androidx.compose.ui.tooling)
-    debugImplementation(libs.androidx.compose.ui.test.manifest)
-
-    // Retrofit for REST API (Login/Register)
-    implementation(libs.retrofit)
-    implementation(libs.converter.gson)
-
-    // <--- ADD THIS LINE FOR PLAIN TEXT RESPONSES
-    implementation("com.squareup.retrofit2:converter-scalars:2.9.0")
-
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
-    // Extended Material Icons (for the bottom bar icons)
-    implementation("androidx.compose.material:material-icons-extended:1.6.0")
-
-    // Stomp Client for WebSockets (There are several, this is a popular choice)
-    implementation("com.github.NaikSoftware:StompProtocolAndroid:1.6.6")
-
-    // Use the latest versions of RxJava 3
-    implementation(libs.rxjava)
-    implementation(libs.rxandroid)
-
+    androidTestImplementation(libs.androidx.ui.test.junit4)
+    debugImplementation(libs.androidx.ui.tooling)
+    debugImplementation(libs.androidx.ui.test.manifest)
 }

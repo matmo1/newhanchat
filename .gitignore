@@ -19,6 +19,7 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
+posts/
 
 # Editor directories and files
 .vscode/
@@ -76,3 +77,4 @@ HELP.md
 .cxx
 local.properties
 uploads
+users

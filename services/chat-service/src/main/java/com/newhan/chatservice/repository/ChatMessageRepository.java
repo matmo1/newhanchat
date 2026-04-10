@@ -8,10 +8,12 @@ import com.newhan.chatservice.model.chatmessage.ChatMessage;
 
 import java.util.List;
 
-public interface ChatMessageRepository extends MongoRepository<ChatMessage, ObjectId> {
+public interface ChatMessageRepository extends MongoRepository<ChatMessage, String> {
 
     @Query("{$or: [ { 'senderId': ?0, 'recipientId': ?1 }, { 'senderId': ?1, 'recipientId': ?0 } ]}")
     List<ChatMessage> findChatHistory(ObjectId user1, ObjectId user2);
 
     Object findBySenderIdAndRecipientId(ObjectId senderId, ObjectId recipientId);
+
+    List<ChatMessage> findByChatId(String chatId);
 }

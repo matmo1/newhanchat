@@ -1,21 +1,17 @@
-package com.newhan.chatservice.service; // Adjust to match your folder structure
+package com.newhan.chatservice.service;
 
-import com.newhan.chatservice.dto.userdtos.UserLoginDTO;
-import com.newhan.chatservice.dto.userdtos.UserRegistrationDTO;
-import com.newhan.chatservice.dto.userdtos.UserResponseDTO;
-import com.newhan.chatservice.dto.JwtResponseDTO; // Import this!
+import com.newhan.chatservice.model.user.StatusType;
 import com.newhan.chatservice.model.user.User;
+import com.newhan.chatservice.model.user.UserStatus;
 import com.newhan.chatservice.repository.UserRepository;
-import org.bson.types.ObjectId;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -28,12 +24,6 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @Mock
-    private PasswordEncoder passwordEncoder;
-
-    @Mock
-    private JwtService jwtService;
-
     @InjectMocks
     private UserService userService;
 
@@ -42,61 +32,60 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         testUser = new User();
-        testUser.setUserId(new ObjectId());
-        testUser.setUserName("testuser");
-        testUser.setPassword("encodedPassword");
-        testUser.setFirstName("Test");
-        testUser.setLastName("User");
+        testUser.setNickName("johndoe");
+        testUser.setFullName("John Doe");
+        testUser.setStatus(new UserStatus());
     }
 
     @Test
-    void registerUser_Success() {
-        UserRegistrationDTO dto = new UserRegistrationDTO(
-                "testuser", "Test", "User", LocalDateTime.now(), "password123");
-
-        when(userRepository.existsByUserName(dto.userName())).thenReturn(false);
-        when(passwordEncoder.encode(dto.password())).thenReturn("encodedPassword");
+    void connect_NewUser_SetsOnlineAndSaves() {
+        when(userRepository.findByNickName("johndoe")).thenReturn(Optional.empty());
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        UserResponseDTO result = userService.registerUser(dto);
+        userService.connect(testUser);
 
-        assertNotNull(result);
-        assertEquals("testuser", result.username());
+        verify(userRepository).save(argThat(user -> 
+            user.getNickName().equals("johndoe") && 
+            user.getStatus().getType() == StatusType.ONLINE
+        ));
     }
 
     @Test
-    void registerUser_ThrowsException_WhenUsernameExists() {
-        UserRegistrationDTO dto = new UserRegistrationDTO(
-                "testuser", "Test", "User", LocalDateTime.now(), "password123");
+    void connect_ExistingUser_UpdatesStatus() {
+        User existingUser = new User();
+        existingUser.setNickName("johndoe");
+        existingUser.setStatus(new UserStatus());
+        existingUser.getStatus().setType(StatusType.OFFLINE);
 
-        when(userRepository.existsByUserName(dto.userName())).thenReturn(true);
+        when(userRepository.findByNickName("johndoe")).thenReturn(Optional.of(existingUser));
 
-        assertThrows(IllegalArgumentException.class, () -> userService.registerUser(dto));
+        userService.connect(testUser);
+
+        verify(userRepository).save(argThat(user -> 
+            user.getStatus().getType() == StatusType.ONLINE
+        ));
     }
 
     @Test
-    void loginUser_Success() {
-        UserLoginDTO loginDTO = new UserLoginDTO("testuser", "password123");
-        
-        when(userRepository.findByUserName(loginDTO.username())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginDTO.password(), testUser.getPassword())).thenReturn(true);
-        when(jwtService.generateToken(testUser)).thenReturn("mock-jwt-token");
+    void disconnect_ExistingUser_SetsOffline() {
+        testUser.getStatus().setType(StatusType.ONLINE);
+        when(userRepository.findByNickName("johndoe")).thenReturn(Optional.of(testUser));
 
-        // FIX: Expect JwtResponseDTO, not String
-        JwtResponseDTO response = userService.loginUser(loginDTO);
+        userService.disconnect("johndoe");
 
-        // FIX: Check the token property
-        assertEquals("mock-jwt-token", response.token());
+        verify(userRepository).save(argThat(user -> 
+            user.getNickName().equals("johndoe") && 
+            user.getStatus().getType() == StatusType.OFFLINE
+        ));
     }
 
     @Test
-    void loginUser_ThrowsException_WhenPasswordInvalid() {
-        UserLoginDTO loginDTO = new UserLoginDTO("testuser", "wrongpassword");
+    void findConnectedUsers_ReturnsOnlyOnlineUsers() {
+        when(userRepository.findAllByStatus_Type(StatusType.ONLINE)).thenReturn(List.of(testUser));
 
-        when(userRepository.findByUserName(loginDTO.username())).thenReturn(Optional.of(testUser));
-        when(passwordEncoder.matches(loginDTO.password(), testUser.getPassword())).thenReturn(false);
+        List<User> result = userService.findConnectedUsers();
 
-        // FIX: Ensure this is wrapped in assertThrows
-        assertThrows(IllegalArgumentException.class, () -> userService.loginUser(loginDTO));
+        assertEquals(1, result.size());
+        assertEquals("johndoe", result.get(0).getNickName());
     }
 }

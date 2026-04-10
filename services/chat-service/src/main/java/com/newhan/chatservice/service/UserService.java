@@ -1,104 +1,51 @@
 package com.newhan.chatservice.service;
 
-import org.bson.types.ObjectId;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import com.newhan.chatservice.dto.JwtResponseDTO;
-import com.newhan.chatservice.dto.userdtos.UserLoginDTO;
-import com.newhan.chatservice.dto.userdtos.UserRegistrationDTO;
-import com.newhan.chatservice.dto.userdtos.UserResponseDTO;
+import com.newhan.chatservice.dto.userdtos.UserUpdateEvent;
 import com.newhan.chatservice.model.user.StatusType;
 import com.newhan.chatservice.model.user.User;
 import com.newhan.chatservice.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class UserService {
+
     private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
 
-    public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-    }
-
-    @Transactional
-    public UserResponseDTO registerUser(UserRegistrationDTO dto) {
-        if (userRepository.existsByUserName(dto.userName())) {
-            throw new IllegalArgumentException("Username already exists");
-        }
-
-        User user = new User();
-        user.setUserName(dto.userName());
-        user.setFirstName(dto.fname());
-        user.setLastName(dto.lname());
-        user.setDateOfBirth(dto.dOfBirth());
-        user.setPassword(passwordEncoder.encode(dto.password()));
-        user.getUserStatus().setStatus(StatusType.OFFLINE);
-
-        User savedUser = userRepository.save(user);
-        return toDto(savedUser);
-    }
-
-    @Transactional
-    public JwtResponseDTO loginUser(UserLoginDTO dto) {
-        User user = userRepository.findByUserName(dto.username())
-            .orElseThrow(() -> new IllegalArgumentException("Invalid username or password"));
-
-        if (!passwordEncoder.matches(dto.password(), user.getPassword())) {
-            throw new IllegalArgumentException("Invalid username or password");
-        }
-
-        String token = jwtService.generateToken(user);
+    public void connect(User user) {
+        // Find by Nickname, OR create new if first time in Chat Service
+        var storedUser = userRepository.findByNickName(user.getNickName())
+                                       .orElse(user);
         
-        // DO THIS: Passing (token, userId, username) to match the Record definition
-        return new JwtResponseDTO(token, user.getUserId().toString(), user.getUserName());
+        storedUser.getStatus().setType(StatusType.ONLINE);
+        // Ensure other fields are up to date
+        storedUser.setFullName(user.getFullName());
+        storedUser.setProfilePictureUrl(user.getProfilePictureUrl());
+        
+        userRepository.save(storedUser);
     }
 
-    public UserResponseDTO getUserById(ObjectId id) {
-        return userRepository.findById(id)
-        .map(this::toDto)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public void disconnect(String nickName) {
+        var storedUser = userRepository.findByNickName(nickName).orElse(null);
+        if (storedUser != null) {
+            storedUser.getStatus().setType(StatusType.OFFLINE);
+            userRepository.save(storedUser);
+        }
     }
 
-    @Transactional
-    public UserResponseDTO updateStatus(ObjectId id, StatusType status) {
-        User user = userRepository.findById(id)
-        .orElseThrow(() -> new IllegalArgumentException("User not found"));
-        user.getUserStatus().setStatus(status);
-        return toDto(userRepository.save(user));
+    public List<User> findConnectedUsers() {
+        return userRepository.findAllByStatus_Type(StatusType.ONLINE);
     }
 
-    public java.util.List<UserResponseDTO> getAllUsers() {
-        return userRepository.findAll().stream().map(this::toDto).toList();
-    }
-
-    @Transactional
-    public void connectUser(String userId) {
-        if (userId == null) return;
-        userRepository.findById(new ObjectId(userId)).ifPresent(user -> {
-            user.getUserStatus().setOnline(); // Restores preference
+    public void updateProfileFromEvent(UserUpdateEvent event) {
+        userRepository.findByNickName(event.username()).ifPresent(user -> {
+            // Only update the display fields, ignore status
+            user.setFullName(event.fullName());
+            user.setProfilePictureUrl(event.profilePictureUrl());
+            
             userRepository.save(user);
         });
-    }
-
-    @Transactional
-    public void disconnectUser(String userId) {
-        if (userId == null) return;
-        userRepository.findById(new ObjectId(userId)).ifPresent(user -> {
-            user.getUserStatus().setOffline(); // Sets OFFLINE but keeps preference
-            userRepository.save(user);
-        });
-    }
-
-    private UserResponseDTO toDto(User user) {
-        return new UserResponseDTO(user.getUserId(), 
-            user.getUserName(), 
-            user.getFirstName(), 
-            user.getLastName(), 
-            user.getUserStatus());
     }
 }

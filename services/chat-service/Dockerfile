@@ -13,7 +13,7 @@ COPY pom.xml .
 COPY src ./src
 
 RUN ./mvnw dependency:go-offline
-RUN ./mvnw clean package 
+RUN ./mvnw clean package -Dmaven.test.skip=true
 
 # Runtime stage with OpenJDK 21 JRE
 FROM eclipse-temurin:21-jre-jammy

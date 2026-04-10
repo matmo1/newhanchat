@@ -1,47 +1,31 @@
 package com.newhan.chatservice.model.chatmessage;
 
-import java.time.LocalDateTime;
-
-import org.bson.types.ObjectId;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+import java.util.Date;
 
-@Document(collection = "chatmessage")
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+@Document(collection = "chat_messages")
 public class ChatMessage {
-
-    @Id
-    private ObjectId mesId;
-
-    private String content;
     
-    private ObjectId senderId;
-    private ObjectId recipientId;
+    @Id
+    private String id; // Mongo generates this as an ObjectId automatically
 
-    private LocalDateTime timestamp;
+    private String chatId; // Auto-generated: "minUUID_maxUUID"
+    private String senderId;
+    private String recipientId;
+    private String content;
+    private Date timestamp;
 
-    private MessageSatus status = MessageSatus.PENDING;
-
-    private boolean edited = false;
-    private LocalDateTime lastEdited;
-
-    public ChatMessage(String content) {
-        this.content = content;
-    }
-
-    public ObjectId getId() {return mesId;}
-    public String getContent() {return content;}
-    public ObjectId getSenderId() {return senderId;}
-    public ObjectId getReciepentId() {return recipientId;}
-    public LocalDateTime getTimestamp() {return timestamp;}
-    public MessageSatus getStatus() {return status;}
-    public boolean getEdited() {return edited;}
-    public LocalDateTime getLastEdited() {return lastEdited;}
-
-    public void setSenderId(ObjectId id) {senderId = id;}
-    public void setReciepentId(ObjectId id) {recipientId = id;}
-    public void setStatus(MessageSatus s) {status = s;}
-    public void setMessageContent(String content) {this.content = content;}
-    public void setTimestamp(LocalDateTime time) {timestamp = time;}
-    public void setEdited(boolean b) {edited = b;}
-    public void setLastEdited() {lastEdited = LocalDateTime.now();} 
+    private boolean isEdited;
+    private Date lastEdited;
+    
+    private MessageSatus status; // SENT, DELIVERED, READ
 }
