@@ -38,7 +38,7 @@ interface ApiService {
     suspend fun getUserProfile(@Path("id") userId: String): UserResponse
 
     // Update the bio. Spring expects raw text, so we use RequestBody in Retrofit
-    @PATCH("api/users/{id}/bio")
+    @PATCH("/api/users/{id}/bio")
     suspend fun updateBio(
         @Path("id") userId: String,
         @Body newBio: RequestBody
@@ -84,14 +84,14 @@ interface ApiService {
 
     // Upload Profile Picture (Multipart)
     @Multipart
-    @POST("api/users/{id}/profile-picture")
+    @POST("/api/users/{id}/profile-picture")
     suspend fun uploadProfilePicture(
         @Path("id") userId: String,
         @Part file: MultipartBody.Part
     ): UserResponse
 
     // Update Name
-    @PATCH("api/users/{id}/name")
+    @PATCH("/api/users/{id}/name")
     suspend fun updateName(
         @Path("id") userId: String,
         @Query("fname") fname: String,

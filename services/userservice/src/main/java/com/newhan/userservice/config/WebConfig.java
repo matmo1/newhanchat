@@ -8,7 +8,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
-    @Value("${file.upload.dir:/app/uploads/users}")
+    @Value("${file.upload.dir:/app/users}")
     private String uploadDir;
 
     @Override
@@ -16,6 +16,8 @@ public class WebConfig implements WebMvcConfigurer {
         // When a request hits /api/users/media/some_image.jpg...
         registry.addResourceHandler("/api/users/media/**")
                 // ...look for it in the physical directory we mapped in Docker
-                .addResourceLocations("file:" + uploadDir + "/");
+                .addResourceLocations(
+                    "file:" + uploadDir + "/"
+                );
     }
 }

@@ -31,7 +31,8 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         // --- FIX: Add "/ws-chat" to this check ---
         if (path.startsWith("/api/users/register") || 
             path.startsWith("/api/users/login") ||
-            path.startsWith("/ws-chat")) { // Allow WebSocket handshake
+            path.startsWith("/api/users/media/") ||
+            path.startsWith("/ws-chat")) {
             
             filterChain.doFilter(request, response);
             return;

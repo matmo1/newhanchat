@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.model.ChatMessage
 import com.newhanchat.v1.data.model.ChatMessageDTO
+import com.newhanchat.v1.data.model.EditMessageRequest
 import com.newhanchat.v1.data.model.EditedMessage
 import com.newhanchat.v1.data.model.MessageUpdate
 import io.reactivex.disposables.CompositeDisposable
@@ -119,15 +120,12 @@ class ChatManager {
     }
 
     fun editMessage(messageId: String, newContent: String) {
-        val payload = Gson().toJson(EditedMessage(messageId, newContent))
-        val editSub = stompClient?.send("/app/edit", payload)
-            ?.subscribeOn(Schedulers.io())
-            ?.subscribe({
-                Log.d("ChatManager", "Edit request sent")
-            }, {
-                Log.e("ChatManager", "Edit error", it)
-            })
-        editSub?.let { compositeDisposable.add(it as Disposable) }
+        // ✨ Ensure the JSON keys match the Java Backend perfectly!
+        val request = EditMessageRequest(messageId, newContent)
+
+        // Convert to JSON and send over STOMP
+        val jsonPayload = Gson().toJson(request)
+        stompClient?.send("/app/edit", jsonPayload)?.subscribe()
     }
 
     private fun sendQueuedMessages() {

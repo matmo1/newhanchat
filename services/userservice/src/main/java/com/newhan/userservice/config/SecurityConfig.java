@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .requestMatchers(
                     HttpMethod.POST, "/api/users/register", "/api/users/login"
                 ).permitAll()
+                .requestMatchers("/api/users/media/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/api/users/{id}/profile-picture").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().permitAll()
