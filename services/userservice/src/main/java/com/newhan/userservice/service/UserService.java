@@ -142,7 +142,12 @@ public class UserService {
 
         // 5. Notify Chat Service via Kafka
         String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
-        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(savedUser.getUsername(), fullName, fileUrl));
+        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(
+            savedUser.getId(), 
+            savedUser.getUsername(), 
+            fullName, 
+            fileUrl
+        ));
 
         return mapToDTO(savedUser);
     }
@@ -155,7 +160,12 @@ public class UserService {
 
         // Notify Chat Service via Kafka so their new name shows up in chats immediately
         String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
-        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(savedUser.getUsername(), fullName, savedUser.getProfilePictureUrl()));
+        kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(
+            savedUser.getId(), 
+            savedUser.getUsername(), 
+            fullName, 
+            savedUser.getProfilePictureUrl()
+        ));
 
         return mapToDTO(savedUser);
     }

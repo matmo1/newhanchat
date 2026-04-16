@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,6 +26,7 @@ fun PostListScreen(
     val posts by viewModel.posts.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
 
+    // Automatically load posts when the screen opens
     LaunchedEffect(Unit) {
         viewModel.loadPosts()
     }
@@ -33,7 +35,20 @@ fun PostListScreen(
         topBar = {
             TopAppBar(
                 title = { Text("Feed", style = MaterialTheme.typography.titleLarge) },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+                actions = {
+                    // ✨ FIXED: A bulletproof refresh button instead of the experimental swipe gesture!
+                    IconButton(
+                        onClick = { viewModel.loadPosts() },
+                        enabled = !isLoading
+                    ) {
+                        if (isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Default.Refresh, contentDescription = "Refresh Feed")
+                        }
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -41,11 +56,14 @@ fun PostListScreen(
                 Icon(Icons.Default.Add, contentDescription = "Create Post")
             }
         },
-        // ✨ FIXED: This stops the Scaffold from blocking the system bars!
         containerColor = Color.Transparent
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
-            if (isLoading) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+        ) {
+            if (isLoading && posts.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (posts.isEmpty()) {
                 Text("No posts yet. Be the first!", modifier = Modifier.align(Alignment.Center))

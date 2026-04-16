@@ -1,4 +1,4 @@
-package com.newhan.userservice.dto; // (Adjust package name per service)
+package com.newhan.postservice.dto; // (Adjust package name per service)
 
 public record UserUpdateEvent(
     String userId,       // ✨ Added for the post-service database

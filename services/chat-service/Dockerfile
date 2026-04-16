@@ -1,31 +1,40 @@
-# Build stage with OpenJDK 21
-FROM eclipse-temurin:21-jdk-jammy as builder
+# 1. Build stage: Fixed 'as' casing and optimized for caching
+FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /app
 
-# First copy just the mvnw file to verify it's there
+# Copy only the files needed to download dependencies [cite: 1]
+# This prevents the 'dependency:go-offline' step from re-running if only your code changes
 COPY mvnw .
-RUN sed -i 's/\r$//' mvnw  # Remove Windows CRLF line endings if present
-RUN chmod +x mvnw
-
-# Then copy the rest
 COPY .mvn/ .mvn
 COPY pom.xml .
+
+# Fix line endings and permissions for the wrapper [cite: 2]
+RUN sed -i 's/\r$//' mvnw 
+RUN chmod +x mvnw
+
+# Use a BuildKit cache mount to share the Maven repo across builds
+# This is the single biggest speed improvement for multiple microservices
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline
+
+# Copy the source code AFTER the dependencies are cached 
 COPY src ./src
 
-RUN ./mvnw dependency:go-offline
-RUN ./mvnw clean package -Dmaven.test.skip=true
+# Build the JAR using the cache mount again
+RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -Dmaven.test.skip=true
 
-# Runtime stage with OpenJDK 21 JRE
+# 2. Runtime stage [cite: 1]
 FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
+
+# Copy the built artifact from the builder stage [cite: 1]
 COPY --from=builder /app/target/newhanchat-*.jar app.jar
 
-# Environment variables for MongoDB
+# Environment variables [cite: 1]
 ENV SPRING_DATA_MONGODB_URI=mongodb://mongo:27017/newhanchat
 ENV SPRING_DATA_MONGODB_DATABASE=newhanchat
-
-# Set timezone (optional)
 ENV TZ=Asia/Seoul
+
+# Set timezone [cite: 1]
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 EXPOSE 8080

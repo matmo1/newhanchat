@@ -1,20 +1,26 @@
-# Use the same Java version as your other services
-FROM eclipse-temurin:21-jdk-jammy
-
+# 1. Build Stage
+FROM eclipse-temurin:21-jdk-jammy AS builder
 WORKDIR /app
 
-# Copy Maven wrapper and config
+# Copy Maven files first to cache dependencies
 COPY .mvn/ .mvn
 COPY mvnw pom.xml ./
+RUN chmod +x mvnw
 
-# Download dependencies (this layer is cached)
-RUN ./mvnw dependency:go-offline
+# Use the cache mount to share dependencies with your other services
+RUN --mount=type=cache,target=/root/.m2 ./mvnw dependency:go-offline
 
-# Copy source code
+# Copy source and build the JAR
 COPY src ./src
+RUN --mount=type=cache,target=/root/.m2 ./mvnw clean package -DskipTests
 
-# Build the JAR (skipping tests to speed up deployment)
-RUN ./mvnw clean package
-# Run the Gateway
-# Ensure the JAR name matches your pom.xml artifactId + version
-CMD ["java", "-jar", "target/api-gateway-0.0.1-SNAPSHOT.jar"]
+# 2. Runtime Stage
+FROM eclipse-temurin:21-jre-jammy
+WORKDIR /app
+
+# Copy the JAR from the builder stage
+# Tip: Using a wildcard *.jar makes it more resilient to version changes
+COPY --from=builder /app/target/*.jar app.jar
+
+EXPOSE 8082
+ENTRYPOINT ["java", "-jar", "app.jar"]

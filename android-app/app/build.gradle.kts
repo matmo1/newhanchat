@@ -27,8 +27,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://192.168.1.96:8082\"")
-        buildConfigField("String", "WS_BASE_URL", "\"ws://192.168.1.96:8082/ws-chat\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://10.73.230.97:8082\"")
+        buildConfigField("String", "WS_BASE_URL", "\"ws://10.73.230.97:8082/ws-chat\"")
     }
 
     // Implementing Product Flavors for environment management

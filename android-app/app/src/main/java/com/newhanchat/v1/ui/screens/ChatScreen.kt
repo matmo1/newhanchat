@@ -1,22 +1,31 @@
 package com.newhanchat.v1.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
+import com.newhanchat.v1.BuildConfig
 import com.newhanchat.v1.data.api.ChatManager
 import com.newhanchat.v1.data.api.apiService
 import com.newhanchat.v1.data.model.ChatMessage
 import com.newhanchat.v1.data.model.ChatMessageDTO
+import com.newhanchat.v1.data.model.UserResponse
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,13 +41,21 @@ fun ChatScreen(
     var showEditDialog by remember { mutableStateOf(false) }
     var editContent by remember { mutableStateOf("") }
 
+    // ✨ NEW: State to hold the person you are talking to
+    var recipientProfile by remember { mutableStateOf<UserResponse?>(null) }
+
     LaunchedEffect(recipientId) {
         try {
+            // Fetch chat history
             val response = apiService.getHistory(senderId = myUserId, recipientId = recipientId)
             if (response.isSuccessful && response.body() != null) {
                 messages.clear()
                 messages.addAll(response.body()!!.reversed())
             }
+
+            // ✨ NEW: Fetch their profile to get their name, picture, and status
+            val profileResponse = apiService.getUserProfile(recipientId)
+            recipientProfile = profileResponse
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -64,7 +81,6 @@ fun ChatScreen(
             onDismissRequest = { showEditDialog = false },
             title = { Text("Edit Message") },
             text = { TextField(value = editContent, onValueChange = { editContent = it }) },
-            // ✨ FIXED: Made the edit popup beautifully translucent!
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
             confirmButton = {
                 Button(onClick = {
@@ -80,15 +96,69 @@ fun ChatScreen(
         )
     }
 
-    // ✨ FIXED: Added .imePadding() - This gracefully slides ONLY the text input above the keyboard, anchored to the bottom!
     Column(modifier = Modifier.fillMaxSize().padding(16.dp).imePadding()) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+
+        // ✨ NEW: The Dynamic Header
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
             IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
             Spacer(modifier = Modifier.width(8.dp))
-            Text("Chat with", style = MaterialTheme.typography.titleMedium)
+
+            if (recipientProfile != null) {
+                // Profile Picture
+                if (!recipientProfile!!.profilePictureUrl.isNullOrBlank()) {
+                    val fullUrl = if (recipientProfile!!.profilePictureUrl!!.startsWith("http")) recipientProfile!!.profilePictureUrl
+                    else "${BuildConfig.API_BASE_URL}/api/users/media/${recipientProfile!!.profilePictureUrl}"
+
+                    AsyncImage(
+                        model = fullUrl,
+                        contentDescription = "PFP",
+                        modifier = Modifier.size(40.dp).clip(CircleShape),
+                        contentScale = ContentScale.Crop
+                    )
+                } else {
+                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+                        Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
+                    }
+                }
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                // Name and Status
+                Column {
+                    Text(
+                        text = "${recipientProfile!!.fname} ${recipientProfile!!.lname}",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // Format the status beautifully
+                    val statusType = recipientProfile!!.userStatus?.type ?: "OFFLINE"
+                    val statusColor = when(statusType) {
+                        "ONLINE" -> Color(0xFF4CAF50)
+                        "BUSY" -> Color(0xFFF44336)
+                        "AWAY" -> Color(0xFFFFEB3B)
+                        else -> Color.Gray
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(statusColor))
+                        Spacer(modifier = Modifier.width(6.dp))
+
+                        val statusText = if (statusType == "OFFLINE" && recipientProfile!!.userStatus?.lastActive != null) {
+                            "Last seen: ${recipientProfile!!.userStatus!!.lastActive}"
+                        } else {
+                            statusType.lowercase().replaceFirstChar { it.uppercase() } // e.g., "Online"
+                        }
+
+                        Text(text = statusText, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            } else {
+                Text("Loading...", style = MaterialTheme.typography.titleMedium)
+            }
         }
 
-        HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+        HorizontalDivider(modifier = Modifier.padding(bottom = 8.dp))
 
         LazyColumn(
             modifier = Modifier.weight(1f),
