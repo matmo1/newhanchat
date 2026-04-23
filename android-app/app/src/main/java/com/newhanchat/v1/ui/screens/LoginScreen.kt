@@ -3,11 +3,16 @@ package com.newhanchat.v1.ui.screens
 import android.widget.Toast
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.newhanchat.v1.ui.viewmodel.LoginViewModel
@@ -20,6 +25,8 @@ fun LoginScreen(
 ) {
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    // ✨ NEW: State to track if the password should be shown or hidden
+    var passwordVisible by remember { mutableStateOf(false) }
 
     val isLoading by viewModel.isLoading.collectAsState()
     val error by viewModel.error.collectAsState()
@@ -44,13 +51,27 @@ fun LoginScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
-            value = password, onValueChange = { password = it }, label = { Text("Password") },
-            shape = crispShape, modifier = Modifier.fillMaxWidth(), singleLine = true
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Password") },
+            shape = crispShape,
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            // ✨ FIXED: Applies dots/asterisks when passwordVisible is false
+            visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+            // ✨ FIXED: Adds the toggleable eye icon
+            trailingIcon = {
+                val image = if (passwordVisible) Icons.Default.Visibility else Icons.Default.VisibilityOff
+                val description = if (passwordVisible) "Hide password" else "Show password"
+
+                IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                    Icon(imageVector = image, contentDescription = description)
+                }
+            }
         )
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            // ✨ FIXED: Now using exactly 2 parameters (token, userId) to match your ViewModel
             onClick = {
                 viewModel.login(username, password) { token, userId ->
                     onLoginSuccess(token, userId, username)

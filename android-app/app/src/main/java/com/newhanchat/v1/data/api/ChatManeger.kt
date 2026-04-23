@@ -59,10 +59,14 @@ class ChatManager {
                     LifecycleEvent.Type.ERROR -> {
                         Log.e("ChatManager", "STOMP error", lifecycleEvent.exception)
                         isConnected = false
+                        // ✨ FIXED: Auto-reconnect when the hotspot drops the connection!
+                        stompClient?.connect(headers)
                     }
                     LifecycleEvent.Type.CLOSED -> {
                         isConnected = false
                         Log.d("ChatManager", "STOMP connection closed")
+                        // ✨ FIXED: Auto-reconnect when the hotspot drops the connection!
+                        stompClient?.connect(headers)
                     }
                     else -> {}
                 }

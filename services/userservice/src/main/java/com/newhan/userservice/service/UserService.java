@@ -28,7 +28,7 @@ public class UserService {
     private final KafkaProducerService kafkaProducerService;
     private final ProfilePicStorageService picStorageService;
 
-    @Value("${app.api-base-url:http://192.168.1.96:8082}")
+    @Value("${app.api-base-url:http://10.73.230.97:8082}")
     private String apiBaseUrl;
 
     public UserService(UserRepository userRepository, PasswordEncoder passwordEncoder, JwtService jwtService, KafkaProducerService kafkaProducerService, ProfilePicStorageService picStorageService) {
@@ -133,20 +133,17 @@ public class UserService {
         // 2. Save physical file to disk
         String fileName = picStorageService.storeFile(file);
 
-        // 3. Dynamically build the URL based on the request origin
-        String fileUrl = apiBaseUrl + "/api/users/media/" + fileName;
-
-        // 4. Update database
-        user.setProfilePictureUrl(fileUrl);
+        user.setProfilePictureUrl(fileName);
         User savedUser = userRepository.save(user);
 
-        // 5. Notify Chat Service via Kafka
         String fullName = savedUser.getFirstName() + " " + savedUser.getLastName();
+        
+        // ✨ FIXED: Pass only the raw filename to Kafka as well!
         kafkaProducerService.sendProfileUpdate(new UserUpdateEvent(
             savedUser.getId(), 
             savedUser.getUsername(), 
             fullName, 
-            fileUrl
+            fileName 
         ));
 
         return mapToDTO(savedUser);
