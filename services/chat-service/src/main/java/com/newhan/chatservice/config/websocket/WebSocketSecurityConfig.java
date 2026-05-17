@@ -19,7 +19,7 @@ public class WebSocketSecurityConfig {
             .simpDestMatchers("/app/**").authenticated()
             .simpSubscribeDestMatchers("/user/**").authenticated()
             .simpTypeMatchers(CONNECT, UNSUBSCRIBE, DISCONNECT).permitAll()
-            .anyMessage().denyAll();
+            .anyMessage().authenticated();
     }
 
     @Bean

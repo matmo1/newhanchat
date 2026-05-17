@@ -40,24 +40,32 @@ public class UserService {
     }
 
     public void register(UserRegistrationDTO dto) {
-        if (userRepository.existsByUsername(dto.userName())) {
+        // ✨ Clean the inputs immediately!
+        String cleanUsername = dto.userName().trim();
+        String cleanPassword = dto.password().trim();
+        String cleanFname = dto.fname().trim();
+        String cleanLname = dto.lname().trim();
+
+        if (userRepository.existsByUsername(cleanUsername)) {
             throw new RuntimeException("Username already exists");
         }
+        
         User user = new User();
-        user.setUsername(dto.userName());
-        user.setFirstName(dto.fname());
-        user.setLastName(dto.lname());
-        user.setPassword(passwordEncoder.encode(dto.password()));
+        user.setUsername(cleanUsername);
+        user.setFirstName(cleanFname);
+        user.setLastName(cleanLname);
+        
+        // ✨ Hash the CLEANED password
+        user.setPassword(passwordEncoder.encode(cleanPassword));
         
         // Generate a nice default profile picture using their initials!
-        String defaultAvatarUrl = "https://ui-avatars.com/api/?name=" + dto.fname() + "+" + dto.lname() + "&background=random";
+        String defaultAvatarUrl = "https://ui-avatars.com/api/?name=" + cleanFname + "+" + cleanLname + "&background=random";
         user.setProfilePictureUrl(defaultAvatarUrl);
         
         // Handle Date parsing carefully and flexibly
         try {
             if (dto.dOfBirth() != null) {
                 String dobString = dto.dOfBirth().toString();
-                // If the frontend sends "1995-10-25" without the time, this will safely append the time so ISO parsing doesn't crash!
                 if (!dobString.contains("T")) {
                     dobString += "T00:00:00"; 
                 }

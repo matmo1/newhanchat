@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_title">Настройки</string>
+    <string name="app_name">NewHan Чат</string>
+    <string name="language">Език</string>
+    <string name="english">Английски</string>
+    <string name="bulgarian">Български</string>
+    <string name="edit_profile_title">Редактиране на профила</string>
+    <string name="change_app_background_title">Смяна на фона</string>
+    <string name="log_out_title">Изход</string>
+    <string name="username_title">Потребителско име</string>
+    <string name="password_title">Парола</string>
+    <string name="login_title">Вход</string>
+    <string name="don_t_have_an_account_register_title">Нямате акаунт? Регистрирайте се</string>
+    <string name="edit_message_title">Редактиране на съобщение</string>
+    <string name="cancel_title">Отказ</string>
+    <string name="back_title">Назад</string>
+    <string name="last_seen_title">Последно на линия: </string>
+    <string name="loading_title">Зареждане...</string>
+    <string name="type_a_message_title">Напишете съобщение...</string>
+    <string name="send_title">Изпрати</string>
+    <string name="no_posts_yet_be_the_first_title">Няма публикации. Бъдете първи!</string>
+    <string name="create_post_title">Създаване на публикация</string>
+    <string name="create_account_title">Създаване на акаунт</string>
+    <string name="first_name_title">Име</string>
+    <string name="last_name_title">Фамилия</string>
+    <string name="pick_date_title">Избор на дата</string>
+    <string name="register_title">Регистрация</string>
+    <string name="back_to_login_title">Назад към входа</string>
+    <string name="feed_title">Новини</string>
+    <string name="change_profile_picture_title">Смяна на профилната снимка</string>
+    <string name="edit_bio_title">Редактиране на биографията</string>
+    <string name="edit_name_title">Редактиране на името</string>
+    <string name="share_title">Сподели</string>
+    <string name="what_s_on_your_mind_title">Какво си мислите?</string>
+    <string name="pick_image_title">Избор на изображение</string>
+    <string name="add_phototitle">Добавяне на снимка</string>
+    <string name="change_photo_title">Смяна на снимката</string>
+    <string name="save_title">Запазване</string>
+    <string name="about_you_title">За вас</string>
+    <string name="write_a_little_bit_about_yourself_so_others_can_get_to_know_you_title">Напишете малко за себе си, за да могат другите да ви опознаят.</string>
+    <string name="profile_title">Профил</string>
+    <string name="no_bio_provided_yet_title">Все още няма биография.</string>
+    <string name="people_title">Хора</string>
+    <string name="set_status_title">Задаване на статус</string>
+    <string name="profile_picture_title">Профилна снимка</string>
+</resources>

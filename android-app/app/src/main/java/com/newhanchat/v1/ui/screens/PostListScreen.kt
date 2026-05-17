@@ -11,8 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.newhanchat.v1.R
 import com.newhanchat.v1.ui.components.PostCard
 import com.newhanchat.v1.ui.viewmodel.PostViewModel
 
@@ -34,7 +36,7 @@ fun PostListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Feed", style = MaterialTheme.typography.titleLarge) },
+                title = { Text(stringResource(R.string.feed_title), style = MaterialTheme.typography.titleLarge) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     // ✨ FIXED: A bulletproof refresh button instead of the experimental swipe gesture!
@@ -45,7 +47,7 @@ fun PostListScreen(
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Default.Refresh, contentDescription = "Refresh Feed")
+                            Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.refresh_feed_title))
                         }
                     }
                 }
@@ -53,7 +55,7 @@ fun PostListScreen(
         },
         floatingActionButton = {
             FloatingActionButton(onClick = onCreatePostClick, containerColor = MaterialTheme.colorScheme.primary) {
-                Icon(Icons.Default.Add, contentDescription = "Create Post")
+                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.create_post_title))
             }
         },
         containerColor = Color.Transparent
@@ -66,7 +68,7 @@ fun PostListScreen(
             if (isLoading && posts.isEmpty()) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (posts.isEmpty()) {
-                Text("No posts yet. Be the first!", modifier = Modifier.align(Alignment.Center))
+                Text(stringResource(R.string.no_posts_yet_be_the_first_title), modifier = Modifier.align(Alignment.Center))
             } else {
                 LazyColumn(
                     contentPadding = PaddingValues(bottom = 80.dp),

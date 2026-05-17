@@ -17,10 +17,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.newhanchat.v1.BuildConfig
+import com.newhanchat.v1.R
 import com.newhanchat.v1.data.api.ChatManager
 import com.newhanchat.v1.data.api.apiService
 import com.newhanchat.v1.data.model.ChatMessage
@@ -79,7 +81,7 @@ fun ChatScreen(
     if (showEditDialog) {
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
-            title = { Text("Edit Message") },
+            title = { Text(stringResource(R.string.edit_message_title)) },
             text = { TextField(value = editContent, onValueChange = { editContent = it }) },
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.85f),
             confirmButton = {
@@ -92,15 +94,20 @@ fun ChatScreen(
                     showEditDialog = false
                 }) { Text("Save") }
             },
-            dismissButton = { Button(onClick = { showEditDialog = false }) { Text("Cancel") } }
+            dismissButton = { Button(onClick = { showEditDialog = false }) { Text(stringResource(R.string.cancel_title)) } }
         )
     }
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp).imePadding()) {
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .padding(16.dp)
+        .imePadding()) {
 
         // ✨ NEW: The Dynamic Header
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(bottom = 8.dp)) {
-            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(
+                R.string.back_title
+            )) }
             Spacer(modifier = Modifier.width(8.dp))
 
             if (recipientProfile != null) {
@@ -112,11 +119,16 @@ fun ChatScreen(
                     AsyncImage(
                         model = fullUrl,
                         contentDescription = "PFP",
-                        modifier = Modifier.size(40.dp).clip(CircleShape),
+                        modifier = Modifier
+                            .size(40.dp)
+                            .clip(CircleShape),
                         contentScale = ContentScale.Crop
                     )
                 } else {
-                    Box(modifier = Modifier.size(40.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
+                    Box(modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer), contentAlignment = Alignment.Center) {
                         Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
                     }
                 }
@@ -141,11 +153,17 @@ fun ChatScreen(
                     }
 
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Box(modifier = Modifier.size(8.dp).clip(CircleShape).background(statusColor))
+                        Box(modifier = Modifier
+                            .size(8.dp)
+                            .clip(CircleShape)
+                            .background(statusColor))
                         Spacer(modifier = Modifier.width(6.dp))
 
                         val statusText = if (statusType == "OFFLINE" && recipientProfile!!.userStatus?.lastActive != null) {
-                            "Last seen: ${recipientProfile!!.userStatus!!.lastActive}"
+                            stringResource(
+                                R.string.last_seen_title) +
+                                recipientProfile!!.userStatus!!.lastActive
+
                         } else {
                             statusType.lowercase().replaceFirstChar { it.uppercase() } // e.g., "Online"
                         }
@@ -154,7 +172,7 @@ fun ChatScreen(
                     }
                 }
             } else {
-                Text("Loading...", style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.loading_title), style = MaterialTheme.typography.titleMedium)
             }
         }
 
@@ -168,7 +186,9 @@ fun ChatScreen(
             items(messages) { msg ->
                 val isMe = msg.senderId == myUserId
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(4.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(4.dp),
                     horizontalArrangement = if (isMe) Arrangement.End else Arrangement.Start
                 ) {
                     Card(
@@ -201,7 +221,7 @@ fun ChatScreen(
                 value = messageText,
                 onValueChange = { messageText = it },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("Type a message...") },
+                placeholder = { Text(stringResource(R.string.type_a_message_title)) },
                 colors = TextFieldDefaults.colors(
                     unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
                     focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.8f)
@@ -216,7 +236,7 @@ fun ChatScreen(
                     messageText = ""
                 }
             }) {
-                Text("Send")
+                Text(stringResource(R.string.send_title))
             }
         }
     }

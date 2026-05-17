@@ -16,6 +16,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import com.newhanchat.v1.R
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -38,7 +40,7 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back") }
                 },
@@ -48,10 +50,12 @@ fun SettingsScreen(
         // ✨ FIXED: Added transparent container color to the Scaffold!
         containerColor = Color.Transparent
     ) { paddingValues ->
-        Column(modifier = Modifier.padding(paddingValues).fillMaxSize()) {
+        Column(modifier = Modifier
+            .padding(paddingValues)
+            .fillMaxSize()) {
 
             ListItem(
-                headlineContent = { Text("Edit Profile") },
+                headlineContent = { Text(stringResource(R.string.edit_profile_title)) },
                 leadingContent = { Icon(Icons.Default.Edit, contentDescription = null) },
                 modifier = Modifier.clickable { onEditProfile() },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -59,7 +63,7 @@ fun SettingsScreen(
             HorizontalDivider()
 
             ListItem(
-                headlineContent = { Text("Change App Background") },
+                headlineContent = { Text(stringResource(R.string.change_app_background_title)) },
                 leadingContent = { Icon(Icons.Default.Wallpaper, contentDescription = null) },
                 modifier = Modifier.clickable { photoPickerLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)
@@ -67,7 +71,7 @@ fun SettingsScreen(
             HorizontalDivider()
 
             ListItem(
-                headlineContent = { Text("Log Out", color = MaterialTheme.colorScheme.error) },
+                headlineContent = { Text(stringResource(R.string.log_out_title), color = MaterialTheme.colorScheme.error) },
                 leadingContent = { Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
                 modifier = Modifier.clickable { onLogout() },
                 colors = ListItemDefaults.colors(containerColor = Color.Transparent)

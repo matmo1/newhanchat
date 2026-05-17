@@ -14,10 +14,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.newhanchat.v1.R
 import com.newhanchat.v1.data.model.RegisterRequest
 import com.newhanchat.v1.ui.viewmodel.RegisterViewModel
 import java.text.SimpleDateFormat
@@ -46,7 +48,12 @@ fun RegisterScreen(
     val context = LocalContext.current
     val crispShape = RoundedCornerShape(16.dp)
 
-    if (error != null) Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(error) {
+        if (error != null) {
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        }
+    }
+
 
     if (showDatePicker) {
         DatePickerDialog(
@@ -63,31 +70,40 @@ fun RegisterScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp)
+            .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        Text("Create Account", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(R.string.create_account_title), style = MaterialTheme.typography.headlineMedium)
         Spacer(modifier = Modifier.height(24.dp))
 
-        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text("Username") }, shape = crispShape, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = username, onValueChange = { username = it }, label = { Text(stringResource(R.string.username_title)) }, shape = crispShape, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(value = fname, onValueChange = { fname = it }, label = { Text("First Name") }, shape = crispShape, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = fname, onValueChange = { fname = it }, label = { Text(
+            stringResource(R.string.first_name_title)
+        ) }, shape = crispShape, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(value = lname, onValueChange = { lname = it }, label = { Text("Last Name") }, shape = crispShape, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = lname, onValueChange = { lname = it }, label = { Text(
+            stringResource(R.string.last_name_title)
+        ) }, shape = crispShape, modifier = Modifier.fillMaxWidth())
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
-            value = dob, onValueChange = {}, label = { Text("Date of Birth") },
+            value = dob, onValueChange = {}, label = { Text(stringResource(R.string.date_of_birth_title)) },
             readOnly = true, shape = crispShape, modifier = Modifier.fillMaxWidth(),
-            trailingIcon = { IconButton(onClick = { showDatePicker = true }) { Icon(Icons.Default.DateRange, "Pick Date") } }
+            trailingIcon = { IconButton(onClick = { showDatePicker = true }) { Icon(Icons.Default.DateRange,
+                stringResource(R.string.pick_date_title)
+            ) } }
         )
         Spacer(modifier = Modifier.height(12.dp))
 
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.password_title)) },
             shape = crispShape,
             modifier = Modifier.fillMaxWidth(),
             // ✨ FIXED: Applies dots/asterisks when passwordVisible is false
@@ -107,17 +123,27 @@ fun RegisterScreen(
 
         Button(
             onClick = {
-                val req = RegisterRequest(username, fname, lname, "${dob}T12:00:00", password)
+                // ✨ FIXED: Strip out the invisible spaces added by the Bulgarian keyboard!
+                val cleanUsername = username.trim()
+                val cleanFname = fname.trim()
+                val cleanLname = lname.trim()
+                val cleanPassword = password.trim()
+
+                val req = RegisterRequest(cleanUsername, cleanFname, cleanLname, "${dob}T12:00:00", cleanPassword)
                 viewModel.register(req) {
                     Toast.makeText(context, "Success!", Toast.LENGTH_SHORT).show()
                     onRegisterSuccess()
                 }
             },
-            enabled = !isLoading && dob.isNotBlank(), modifier = Modifier.fillMaxWidth().height(50.dp)
+            enabled = !isLoading && dob.isNotBlank(), modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         ) {
-            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Text("Register")
+            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Text(
+                stringResource(R.string.register_title)
+            )
         }
         Spacer(modifier = Modifier.height(12.dp))
-        TextButton(onClick = onNavigateToLogin) { Text("Back to Login") }
+        TextButton(onClick = onNavigateToLogin) { Text(stringResource(R.string.back_to_login_title)) }
     }
 }

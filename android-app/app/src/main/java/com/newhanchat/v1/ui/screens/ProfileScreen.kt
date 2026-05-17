@@ -11,8 +11,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.newhanchat.v1.R
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,10 +35,10 @@ fun ProfileScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Profile") },
+                title = { Text(stringResource(R.string.profile_title)) },
                 actions = {
                     IconButton(onClick = onNavigateToSettings) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "Settings")
+                        Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.settings_title))
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -45,7 +47,9 @@ fun ProfileScreen(
         containerColor = Color.Transparent
     ) { paddingValues ->
         Box(
-            modifier = Modifier.fillMaxSize().padding(paddingValues)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
         ) {
             if (isLoading && profile == null) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
@@ -57,7 +61,9 @@ fun ProfileScreen(
                 }
             } else if (profile != null) {
                 Column(
-                    modifier = Modifier.fillMaxSize().padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     val pfpUrl = profile!!.profilePictureUrl
@@ -66,7 +72,9 @@ fun ProfileScreen(
                         AsyncImage(
                             model = fullUrl,
                             contentDescription = "Profile Picture",
-                            modifier = Modifier.size(150.dp).clip(CircleShape),
+                            modifier = Modifier
+                                .size(150.dp)
+                                .clip(CircleShape),
                             contentScale = ContentScale.Crop
                         )
                     }
@@ -83,7 +91,9 @@ fun ProfileScreen(
                         elevation = CardDefaults.cardElevation(0.dp),
                         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     ) {
-                        val displayBio = profile!!.bio.takeIf { !it.isNullOrBlank() } ?: "No bio provided yet."
+                        val displayBio = profile!!.bio.takeIf { !it.isNullOrBlank() } ?: stringResource(
+                            R.string.no_bio_provided_yet_title
+                        )
                         Text(text = displayBio, modifier = Modifier.padding(16.dp), style = MaterialTheme.typography.bodyLarge)
                     }
                 }

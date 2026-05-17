@@ -27,8 +27,14 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "API_BASE_URL", "\"http://10.73.230.97:8082\"")
-        buildConfigField("String", "WS_BASE_URL", "\"ws://10.73.230.97:8082/ws-chat\"")
+        buildConfigField("String", "API_BASE_URL", "\"http://10.120.206.97:8082\"")
+        buildConfigField("String", "WS_BASE_URL", "\"ws://10.120.206.97:8082/ws-chat\"")
+
+        resourceConfigurations += setOf("en", "bg")
+    }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 
     // Implementing Product Flavors for environment management
@@ -81,6 +87,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation(libs.androidx.appcompat)
 
     // Networking
     implementation(libs.retrofit)

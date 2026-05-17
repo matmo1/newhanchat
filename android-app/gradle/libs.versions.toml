@@ -2,6 +2,7 @@
 agp = "9.0.1" # Stabilized version for 2025-2026 development
 activityCompose = "1.12.3"
 androidImageCropper = "4.7.0"
+appcompat = "1.7.1"
 composeBom = "2026.01.01" # Updated to a 2025 BOM for SDK 36 compatibility
 # Retrofit 2.11.0 is the current standard; 3.0.0 is still in alpha/beta for most
 datastorePreferences = "1.0.0"
@@ -29,6 +30,7 @@ ksp = "2.3.4"
 
 [libraries]
 android-image-cropper = { module = "com.vanniktech:android-image-cropper", version.ref = "androidImageCropper" }
+androidx-appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
 androidx-hilt-navigation-compose = { module = "androidx.hilt:hilt-navigation-compose", version.ref = "hiltNavigationCompose" }

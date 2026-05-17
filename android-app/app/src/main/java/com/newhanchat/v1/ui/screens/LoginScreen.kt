@@ -11,10 +11,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.newhanchat.v1.R
 import com.newhanchat.v1.ui.viewmodel.LoginViewModel
 
 @Composable
@@ -32,28 +34,34 @@ fun LoginScreen(
     val error by viewModel.error.collectAsState()
     val context = LocalContext.current
 
-    if (error != null) Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+    LaunchedEffect(error) {
+        if (error != null) {
+            Toast.makeText(context, error, Toast.LENGTH_SHORT).show()
+        }
+    }
 
     // Crisp, modern rounded fields
     val crispShape = RoundedCornerShape(16.dp)
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(24.dp),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text("NewHan Chat", style = MaterialTheme.typography.displaySmall)
+        Text(stringResource(R.string.app_name), style = MaterialTheme.typography.displaySmall)
         Spacer(modifier = Modifier.height(32.dp))
 
         OutlinedTextField(
-            value = username, onValueChange = { username = it }, label = { Text("Username") },
+            value = username, onValueChange = { username = it }, label = { Text(stringResource(R.string.username_title)) },
             shape = crispShape, modifier = Modifier.fillMaxWidth(), singleLine = true
         )
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text(stringResource(R.string.password_title)) },
             shape = crispShape,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
@@ -73,16 +81,24 @@ fun LoginScreen(
 
         Button(
             onClick = {
-                viewModel.login(username, password) { token, userId ->
-                    onLoginSuccess(token, userId, username)
+                // ✨ FIXED: Strip out the invisible spaces added by the Bulgarian keyboard!
+                val cleanUsername = username.trim()
+                val cleanPassword = password.trim()
+
+                viewModel.login(cleanUsername, cleanPassword) { token, userId ->
+                    onLoginSuccess(token, userId, cleanUsername)
                 }
             },
-            enabled = !isLoading, modifier = Modifier.fillMaxWidth().height(50.dp)
+            enabled = !isLoading, modifier = Modifier
+                .fillMaxWidth()
+                .height(50.dp)
         ) {
-            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Text("Login")
+            if (isLoading) CircularProgressIndicator(modifier = Modifier.size(24.dp)) else Text(
+                stringResource(R.string.login_title)
+            )
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        TextButton(onClick = onNavigateToRegister) { Text("Don't have an account? Register") }
+        TextButton(onClick = onNavigateToRegister) { Text(stringResource(R.string.don_t_have_an_account_register_title)) }
     }
 }

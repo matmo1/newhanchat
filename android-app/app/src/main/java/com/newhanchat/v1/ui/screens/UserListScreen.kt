@@ -16,9 +16,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.newhanchat.v1.BuildConfig
+import com.newhanchat.v1.R
 import com.newhanchat.v1.data.api.apiService
 import com.newhanchat.v1.data.model.UserResponse
 import kotlinx.coroutines.launch
@@ -54,13 +56,13 @@ fun UserListScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("People") },
+                title = { Text(stringResource(R.string.people_title)) },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
                 actions = {
                     Box {
                         // ✨ FIXED: Changed from three dots to a text button
                         TextButton(onClick = { showStatusMenu = true }) {
-                            Text("Set Status")
+                            Text(stringResource(R.string.set_status_title))
                         }
                         DropdownMenu(
                             expanded = showStatusMenu,
@@ -78,7 +80,9 @@ fun UserListScreen(
         },
         containerColor = Color.Transparent
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
             if (isLoading) {
                 CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
             } else if (errorMessage != null) {
@@ -122,13 +126,18 @@ fun UserListItem(user: UserResponse, onClick: () -> Unit) {
 
                 AsyncImage(
                     model = fullUrl,
-                    contentDescription = "Profile Picture",
-                    modifier = Modifier.size(48.dp).clip(CircleShape),
+                    contentDescription = stringResource(R.string.profile_picture_title),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Box(
-                    modifier = Modifier.size(48.dp).clip(CircleShape).background(MaterialTheme.colorScheme.secondaryContainer),
+                    modifier = Modifier
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colorScheme.secondaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(Icons.Default.Person, contentDescription = null, tint = MaterialTheme.colorScheme.onSecondaryContainer)
@@ -137,7 +146,10 @@ fun UserListItem(user: UserResponse, onClick: () -> Unit) {
 
             Spacer(modifier = Modifier.width(12.dp))
 
-            Box(modifier = Modifier.size(12.dp).clip(CircleShape).background(statusColor))
+            Box(modifier = Modifier
+                .size(12.dp)
+                .clip(CircleShape)
+                .background(statusColor))
 
             Spacer(modifier = Modifier.width(8.dp))
 
@@ -145,7 +157,7 @@ fun UserListItem(user: UserResponse, onClick: () -> Unit) {
                 Text(text = "${user.fname} ${user.lname}", style = MaterialTheme.typography.titleMedium)
                 Text(text = "@${user.username}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                 if (user.userStatus?.type == "OFFLINE" && user.userStatus.lastActive != null) {
-                    Text(text = "Last seen: ${user.userStatus.lastActive}", style = MaterialTheme.typography.labelSmall, color = Color.Gray)
+                    Text(text = stringResource(R.string.last_seen_title) + user.userStatus.lastActive, style = MaterialTheme.typography.labelSmall, color = Color.Gray)
                 }
             }
         }

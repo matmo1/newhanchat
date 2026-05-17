@@ -11,7 +11,6 @@ import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Jwts;
@@ -53,7 +52,6 @@ public class WebSocketAuthenticator implements ChannelInterceptor {
                     
                     // IMPORTANT: Set the user in the accessor so Spring Security sees it
                     accessor.setUser(auth);
-                    SecurityContextHolder.getContext().setAuthentication(auth);
                     
                     System.out.println("WebSocket Authenticator: User authenticated successfully: " + userId);
                 } catch (Exception e) {

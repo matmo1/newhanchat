@@ -14,12 +14,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil3.compose.AsyncImage
 import com.newhanchat.v1.ui.viewmodel.PostViewModel
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
 import com.newhanchat.v1.utils.ImageUtils.createMultipartBodyPartFromUri
+import com.newhanchat.v1.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -45,10 +47,10 @@ fun CreatePostScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Create Post") },
+                title = { Text(stringResource(R.string.create_post_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.back_title))
                     }
                 },
                 actions = {
@@ -66,7 +68,7 @@ fun CreatePostScreen(
                         },
                         enabled = !isUploading && (content.isNotBlank() || selectedImageUri != null)
                     ) {
-                        Text("Share")
+                        Text(stringResource(R.string.share_title))
                     }
                 },
                 // ✨ FIXED: Made the top bar transparent
@@ -76,7 +78,9 @@ fun CreatePostScreen(
         // ✨ FIXED: Made the Scaffold transparent so wallpaper shows through system bars
         containerColor = Color.Transparent
     ) { paddingValues ->
-        Box(modifier = Modifier.fillMaxSize().padding(paddingValues)) {
+        Box(modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -88,7 +92,7 @@ fun CreatePostScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .heightIn(min = 120.dp),
-                    placeholder = { Text("What's on your mind?") },
+                    placeholder = { Text(stringResource(R.string.what_s_on_your_mind_title)) },
                     maxLines = 10,
                     shape = MaterialTheme.shapes.medium
                 )
@@ -99,9 +103,11 @@ fun CreatePostScreen(
                     onClick = { imagePicker.launch("image/*") },
                     modifier = Modifier.fillMaxWidth(),
                 ) {
-                    Icon(Icons.Default.Image, contentDescription = "Pick Image")
+                    Icon(Icons.Default.Image, contentDescription = stringResource(R.string.pick_image_title))
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(if (selectedImageUri == null) "Add Photo" else "Change Photo")
+                    Text(if (selectedImageUri == null) stringResource(R.string.add_phototitle) else stringResource(
+                        R.string.change_photo_title
+                    ))
                 }
 
                 if (selectedImageUri != null) {

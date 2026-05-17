@@ -8,8 +8,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.newhanchat.v1.ui.viewmodel.ProfileViewModel
+import com.newhanchat.v1.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -24,10 +26,10 @@ fun EditBioScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Edit Bio") },
+                title = { Text(stringResource(R.string.edit_bio_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancel")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.cancel_title))
                     }
                 },
                 actions = {
@@ -38,7 +40,7 @@ fun EditBioScreen(
                         if (isLoading) {
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                         } else {
-                            Icon(Icons.Default.Check, contentDescription = "Save")
+                            Icon(Icons.Default.Check, contentDescription = stringResource(R.string.save_title))
                         }
                     }
                 },
@@ -49,13 +51,18 @@ fun EditBioScreen(
         containerColor = Color.Transparent
     ) { paddingValues ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(paddingValues).padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
         ) {
             OutlinedTextField(
                 value = bioText,
                 onValueChange = { bioText = it },
-                label = { Text("About You") },
-                modifier = Modifier.fillMaxWidth().height(150.dp),
+                label = { Text(stringResource(R.string.about_you_title)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(150.dp),
                 maxLines = 5,
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = MaterialTheme.colorScheme.primary
@@ -63,7 +70,7 @@ fun EditBioScreen(
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Write a little bit about yourself so others can get to know you.",
+                text = stringResource(R.string.write_a_little_bit_about_yourself_so_others_can_get_to_know_you_title),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
